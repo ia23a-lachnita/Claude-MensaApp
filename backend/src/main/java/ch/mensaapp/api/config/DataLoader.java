@@ -380,17 +380,6 @@ public class DataLoader implements CommandLineRunner {
                             bestellung.setStatus(BestellStatus.ABGEHOLT);
                             break;
                     }
-
-                    // Create payment record for paid orders
-                    Zahlung zahlung = new Zahlung();
-                    zahlung.setBestellung(bestellung);
-                    zahlung.setBetrag(gesamtPreis);
-                    zahlung.setZeitpunkt(LocalDateTime.now().minusHours(new Random().nextInt(24)));
-                    zahlung.setZahlungsMethode(new Random().nextBoolean() ? "KREDITKARTE" : "BANKUEBERWEISUNG");
-                    zahlung.setTransaktionsId(bestellung.getZahlungsReferenz());
-                    zahlung.setErfolgreich(true);
-
-                    zahlungRepository.save(zahlung);
                 } else {
                     bestellung.setZahlungsStatus(ZahlungsStatus.AUSSTEHEND);
                     bestellung.setStatus(BestellStatus.NEU);
@@ -400,8 +389,31 @@ public class DataLoader implements CommandLineRunner {
             }
         }
 
-        // Save all orders
-        bestellungRepository.saveAll(bestellungen);
-        System.out.println("Created sample orders: " + bestellungen.size());
+        // Save all orders FIRST - this is crucial!
+        List<Bestellung> savedBestellungen = bestellungRepository.saveAll(bestellungen);
+
+        // NOW create payment records for paid orders
+        List<Zahlung> zahlungen = new ArrayList<>();
+        for (Bestellung bestellung : savedBestellungen) {
+            if (bestellung.getZahlungsStatus() == ZahlungsStatus.BEZAHLT) {
+                Zahlung zahlung = new Zahlung();
+                zahlung.setBestellung(bestellung); // Now bestellung has an ID
+                zahlung.setBetrag(bestellung.getGesamtPreis());
+                zahlung.setZeitpunkt(LocalDateTime.now().minusHours(new Random().nextInt(24)));
+                zahlung.setZahlungsMethode(new Random().nextBoolean() ? "KREDITKARTE" : "BANKUEBERWEISUNG");
+                zahlung.setTransaktionsId(bestellung.getZahlungsReferenz());
+                zahlung.setErfolgreich(true);
+
+                zahlungen.add(zahlung);
+            }
+        }
+
+        // Save all payments
+        if (!zahlungen.isEmpty()) {
+            zahlungRepository.saveAll(zahlungen);
+        }
+
+        System.out.println("Created sample orders: " + savedBestellungen.size());
+        System.out.println("Created sample payments: " + zahlungen.size());
     }
 }
