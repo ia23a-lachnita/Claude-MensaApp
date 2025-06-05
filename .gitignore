@@ -61,12 +61,6 @@ yarn-error.log*
 /.factorypath
 /recommenders/
 
-# Spring Boot Properties (if you keep sensitive info here locally)
-/application.properties
-/application.yml
-/application-*.properties
-/application-*.yml
-
 # =========================
 # Common OS & Editor Files
 # =========================
