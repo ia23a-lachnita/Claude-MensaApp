@@ -28,12 +28,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const { response } = error;
-    
+
     // Bei 401 Unauthorized automatisch abmelden
     if (response && response.status === 401) {
       store.dispatch(logout());
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -43,8 +43,14 @@ export const authService = {
   login: (email, password) => api.post('/auth/signin', { email, password }),
   register: (userData) => api.post('/auth/signup', userData),
   verifyMfa: (email, password, code) => api.post('/auth/mfa-verify', { email, password, code }),
+
+  // CORRECTED: Send object with email property
   setupMfa: (email) => api.post('/auth/mfa-setup', { email }),
+
+  // CORRECTED: Send object with email and code properties
   enableMfa: (email, code) => api.post('/auth/mfa-enable', { email, code }),
+
+  // CORRECTED: Send object with email and code properties
   disableMfa: (email, code) => api.post('/auth/mfa-disable', { email, code }),
 };
 
@@ -58,11 +64,17 @@ export const userService = {
   updateUserRoles: (id, roles) => api.put(`/users/${id}/roles`, roles),
 };
 
-// Menu Services
+// Menu Services - Fixed
 export const menuService = {
   getMenuToday: () => api.get('/menu/heute'),
   getMenuByDate: (date) => api.get(`/menu/datum/${date}`),
-  getMenuForWeek: (startDate) => api.get('/menu/woche', { params: { startDatum: startDate } }),
+  getMenuForWeek: (startDate) => {
+    // Ensure we only send the date part, not the full timestamp
+    const dateString = startDate instanceof Date
+        ? startDate.toISOString().split('T')[0]
+        : startDate;
+    return api.get('/menu/woche', { params: { startDatum: dateString } });
+  },
   getAllDishes: () => api.get('/menu/gerichte'),
   getVegetarianDishes: () => api.get('/menu/gerichte/vegetarisch'),
   getVeganDishes: () => api.get('/menu/gerichte/vegan'),

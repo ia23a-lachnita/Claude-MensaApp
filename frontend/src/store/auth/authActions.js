@@ -74,7 +74,7 @@ export const checkTokenExpiration = () => (dispatch, getState) => {
     try {
       const decodedToken = jwtDecode(token);
       const currentTime = Date.now() / 1000;
-      
+
       if (decodedToken.exp < currentTime) {
         dispatch(logout());
         toast.info('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
@@ -115,7 +115,8 @@ export const updatePassword = (passwordData) => async (dispatch) => {
 // Setup MFA
 export const setupMfa = (email) => async () => {
   try {
-    const response = await authService.setupMfa({ email });
+    // This will send: { "email": "user@example.com" }
+    const response = await authService.setupMfa(email);
     return response.data;
   } catch (error) {
     const message = error.response?.data?.message || 'Fehler beim Einrichten der Zwei-Faktor-Authentifizierung';
@@ -127,7 +128,8 @@ export const setupMfa = (email) => async () => {
 // Enable MFA
 export const enableMfa = (email, code) => async (dispatch) => {
   try {
-    await authService.enableMfa({ email, code });
+    // This will send: { "email": "user@example.com", "code": "123456" }
+    await authService.enableMfa(email, code);
     dispatch(updateUser({ mfaEnabled: true }));
     toast.success('Zwei-Faktor-Authentifizierung erfolgreich aktiviert');
     return true;
@@ -141,7 +143,8 @@ export const enableMfa = (email, code) => async (dispatch) => {
 // Disable MFA
 export const disableMfa = (email, code) => async (dispatch) => {
   try {
-    await authService.disableMfa({ email, code });
+    // This will send: { "email": "user@example.com", "code": "123456" }
+    await authService.disableMfa(email, code);
     dispatch(updateUser({ mfaEnabled: false }));
     toast.success('Zwei-Faktor-Authentifizierung erfolgreich deaktiviert');
     return true;

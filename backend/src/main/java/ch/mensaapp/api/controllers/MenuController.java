@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -32,11 +34,28 @@ public class MenuController {
 
     @GetMapping("/woche")
     public ResponseEntity<List<MenuplanResponse>> getMenuFuerWoche(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDatum) {
+            @RequestParam(required = false) String startDatum) {
+        LocalDate date;
+
         if (startDatum == null) {
-            startDatum = LocalDate.now();
+            date = LocalDate.now();
+        } else {
+            // Handle both date formats: "2025-06-05" and "2025-06-05T09:19:48.213Z"
+            try {
+                if (startDatum.contains("T")) {
+                    // It's a full timestamp, extract just the date part
+                    date = OffsetDateTime.parse(startDatum).toLocalDate();
+                } else {
+                    // It's already just a date
+                    date = LocalDate.parse(startDatum);
+                }
+            } catch (Exception e) {
+                // Fallback to today if parsing fails
+                date = LocalDate.now();
+            }
         }
-        return ResponseEntity.ok(menuService.getMenuplanFuerWoche(startDatum));
+
+        return ResponseEntity.ok(menuService.getMenuplanFuerWoche(date));
     }
 
     @GetMapping("/gerichte")

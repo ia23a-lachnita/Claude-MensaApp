@@ -74,29 +74,33 @@ public class AuthController {
 
     @PostMapping("/mfa-verify")
     public ResponseEntity<?> verifyMfaCode(@Valid @RequestBody MfaVerificationRequest verificationRequest) {
-        User user = userRepository.findByEmail(verificationRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException("Benutzer nicht gefunden"));
+        try {
+            User user = userRepository.findByEmail(verificationRequest.getEmail())
+                    .orElseThrow(() -> new RuntimeException("Benutzer nicht gefunden"));
 
-        if (mfaUtils.verifyCode(verificationRequest.getCode(), user.getMfaSecret())) {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(verificationRequest.getEmail(), verificationRequest.getPassword()));
+            if (mfaUtils.verifyCode(verificationRequest.getCode(), user.getMfaSecret())) {
+                Authentication authentication = authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(verificationRequest.getEmail(), verificationRequest.getPassword()));
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            String jwt = jwtUtils.generateJwtToken(authentication);
-            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-            
-            List<String> roles = userDetails.getAuthorities().stream()
-                    .map(item -> item.getAuthority())
-                    .collect(Collectors.toList());
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                String jwt = jwtUtils.generateJwtToken(authentication);
+                UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-            return ResponseEntity.ok(new JwtResponse(jwt,
-                    userDetails.getId(),
-                    userDetails.getUsername(),
-                    userDetails.getVorname(),
-                    userDetails.getNachname(),
-                    roles));
-        } else {
-            return ResponseEntity.badRequest().body(new MessageResponse("Ungültiger MFA-Code"));
+                List<String> roles = userDetails.getAuthorities().stream()
+                        .map(item -> item.getAuthority())
+                        .collect(Collectors.toList());
+
+                return ResponseEntity.ok(new JwtResponse(jwt,
+                        userDetails.getId(),
+                        userDetails.getUsername(),
+                        userDetails.getVorname(),
+                        userDetails.getNachname(),
+                        roles));
+            } else {
+                return ResponseEntity.badRequest().body(new MessageResponse("Ungültiger MFA-Code"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Fehler bei der MFA-Verifizierung: " + e.getMessage()));
         }
     }
 
@@ -119,53 +123,68 @@ public class AuthController {
         Role userRole = roleRepository.findByName(ERole.ROLE_USER)
                 .orElseThrow(() -> new RuntimeException("Fehler: Rolle nicht gefunden."));
         roles.add(userRole);
-        
+
         user.setRoles(roles);
         userRepository.save(user);
 
         return ResponseEntity.ok(new MessageResponse("Benutzer erfolgreich registriert!"));
     }
 
+    // CORRECTED: This should accept MfaSetupRequest, not String
     @PostMapping("/mfa-setup")
     public ResponseEntity<?> setupMfa(@Valid @RequestBody MfaSetupRequest setupRequest) {
-        User user = userRepository.findByEmail(setupRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException("Benutzer nicht gefunden"));
+        try {
+            User user = userRepository.findByEmail(setupRequest.getEmail())
+                    .orElseThrow(() -> new RuntimeException("Benutzer nicht gefunden"));
 
-        String secret = mfaUtils.generateSecret();
-        String qrCodeImageUri = mfaUtils.generateQrCodeImageUri(secret, user.getEmail());
+            String secret = mfaUtils.generateSecret();
+            String qrCodeImageUri = mfaUtils.generateQrCodeImageUri(secret, user.getEmail());
 
-        user.setMfaSecret(secret);
-        userRepository.save(user);
-
-        return ResponseEntity.ok(new MfaSetupResponse(qrCodeImageUri, secret));
-    }
-
-    @PostMapping("/mfa-enable")
-    public ResponseEntity<?> enableMfa(@Valid @RequestBody MfaEnableRequest enableRequest) {
-        User user = userRepository.findByEmail(enableRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException("Benutzer nicht gefunden"));
-
-        if (mfaUtils.verifyCode(enableRequest.getCode(), user.getMfaSecret())) {
-            user.setMfaEnabled(true);
+            user.setMfaSecret(secret);
             userRepository.save(user);
-            return ResponseEntity.ok(new MessageResponse("MFA erfolgreich aktiviert"));
-        } else {
-            return ResponseEntity.badRequest().body(new MessageResponse("Ungültiger MFA-Code"));
+
+            return ResponseEntity.ok(new MfaSetupResponse(qrCodeImageUri, secret));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Fehler beim Einrichten der MFA: " + e.getMessage()));
         }
     }
 
+    // CORRECTED: This should accept MfaEnableRequest, not String
+    @PostMapping("/mfa-enable")
+    public ResponseEntity<?> enableMfa(@Valid @RequestBody MfaEnableRequest enableRequest) {
+        try {
+            User user = userRepository.findByEmail(enableRequest.getEmail())
+                    .orElseThrow(() -> new RuntimeException("Benutzer nicht gefunden"));
+
+            if (mfaUtils.verifyCode(enableRequest.getCode(), user.getMfaSecret())) {
+                user.setMfaEnabled(true);
+                userRepository.save(user);
+                return ResponseEntity.ok(new MessageResponse("MFA erfolgreich aktiviert"));
+            } else {
+                return ResponseEntity.badRequest().body(new MessageResponse("Ungültiger MFA-Code"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Fehler beim Aktivieren der MFA: " + e.getMessage()));
+        }
+    }
+
+    // CORRECTED: This should accept MfaDisableRequest, not String
     @PostMapping("/mfa-disable")
     public ResponseEntity<?> disableMfa(@Valid @RequestBody MfaDisableRequest disableRequest) {
-        User user = userRepository.findByEmail(disableRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException("Benutzer nicht gefunden"));
+        try {
+            User user = userRepository.findByEmail(disableRequest.getEmail())
+                    .orElseThrow(() -> new RuntimeException("Benutzer nicht gefunden"));
 
-        if (mfaUtils.verifyCode(disableRequest.getCode(), user.getMfaSecret())) {
-            user.setMfaEnabled(false);
-            user.setMfaSecret(null);
-            userRepository.save(user);
-            return ResponseEntity.ok(new MessageResponse("MFA erfolgreich deaktiviert"));
-        } else {
-            return ResponseEntity.badRequest().body(new MessageResponse("Ungültiger MFA-Code"));
+            if (mfaUtils.verifyCode(disableRequest.getCode(), user.getMfaSecret())) {
+                user.setMfaEnabled(false);
+                user.setMfaSecret(null);
+                userRepository.save(user);
+                return ResponseEntity.ok(new MessageResponse("MFA erfolgreich deaktiviert"));
+            } else {
+                return ResponseEntity.badRequest().body(new MessageResponse("Ungültiger MFA-Code"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Fehler beim Deaktivieren der MFA: " + e.getMessage()));
         }
     }
 }

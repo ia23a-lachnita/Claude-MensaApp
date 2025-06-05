@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="mensa_db@localhost" uuid="a16e4c85-cf4b-4721-bf54-15afbcd4316c">
+    <data-source source="LOCAL" name="mensa_db@localhost" uuid="f10e944b-9925-460c-85b9-560cefc147e2">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
-      <imported>true</imported>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
       <jdbc-url>jdbc:postgresql://localhost:5432/mensa_db</jdbc-url>
       <jdbc-additional-properties>
