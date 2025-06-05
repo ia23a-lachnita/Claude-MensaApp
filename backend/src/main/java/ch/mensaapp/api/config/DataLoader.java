@@ -152,7 +152,7 @@ public class DataLoader implements CommandLineRunner {
         gericht2.setVegan(true);
         gericht2.setZutaten(new HashSet<>(Arrays.asList("Basmatireis", "Karotten", "Zucchini", "Paprika", "Kichererbsen", "Kokosmilch", "Currygewürz")));
         gericht2.setAllergene(new HashSet<>(Arrays.asList("Senf")));
-        gericht2.setBildUrl("https://images.unsplash.com/photo-1585937421612-70a008356c36?auto=format&fit=crop&w=500&q=80");
+        gericht2.setBildUrl("https://images.unsplash.com/photo-1618449840665-9ed506d73a34?q=80&w=500&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
         gerichte.add(gericht2);
 
         Gericht gericht3 = new Gericht();
