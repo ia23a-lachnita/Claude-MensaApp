@@ -1,13 +1,12 @@
 package ch.mensaapp.api.services;
 
-import ch.mensaapp.api.models.Bestellung;
 import ch.mensaapp.api.models.BestellPosition;
+import ch.mensaapp.api.models.Bestellung;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.TemplateEngine;
 
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
@@ -74,6 +73,7 @@ public class EmailService {
     
     public void sendeZahlungsBestaetigung(Bestellung bestellung) {
         try {
+            System.out.println("Sende Mail");
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             
@@ -99,6 +99,7 @@ public class EmailService {
             emailContent.append("</body></html>");
             
             helper.setText(emailContent.toString(), true);
+            helper.setFrom("mensa@timhoch.ch");
             
             mailSender.send(message);
         } catch (Exception e) {
@@ -110,11 +111,13 @@ public class EmailService {
     public void sendeBestellStatusUpdate(Bestellung bestellung) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
+            message.setFrom("mensa@timhoch.ch");
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             
             helper.setTo(bestellung.getUser().getEmail());
             helper.setSubject("Update zu Ihrer Mensa-Bestellung #" + bestellung.getId());
-            
+            helper.setFrom("mensa@timhoch.ch");
+
             StringBuilder emailContent = new StringBuilder();
             emailContent.append("<html><body>");
             emailContent.append("<h1>Update zu Ihrer Bestellung</h1>");
@@ -147,6 +150,7 @@ public class EmailService {
             emailContent.append("</body></html>");
             
             helper.setText(emailContent.toString(), true);
+            helper.setFrom("mensa@timhoch.ch");
             
             mailSender.send(message);
         } catch (Exception e) {

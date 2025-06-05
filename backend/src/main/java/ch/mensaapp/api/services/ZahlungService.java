@@ -67,6 +67,7 @@ public class ZahlungService {
         
         // E-Mail mit Zahlungsbestätigung senden
         emailService.sendeZahlungsBestaetigung(bestellung);
+        System.out.println("Zahlungsbestätigung gesendet für Bestellung ID: " + bestellungId);
         
         return ZahlungResponse.fromEntity(gespeicherteZahlung);
     }
