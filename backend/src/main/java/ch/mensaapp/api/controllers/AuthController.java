@@ -63,6 +63,9 @@ public class AuthController {
             if (userDetails.isMfaEnabled()) {
                 return ResponseEntity.ok(new MfaRequiredResponse(userDetails.getEmail()));
             } else {
+                // reset here
+                bruteForceService.resetFailedAttempts(userDetails.getUsername());
+
                 String jwt = jwtUtils.generateJwtToken(authentication);
                 List<String> roles = userDetails.getAuthorities().stream()
                         .map(item -> item.getAuthority())
@@ -86,7 +89,7 @@ public class AuthController {
                     .body(new MessageResponse("Ungültige E-Mail oder Passwort"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new MessageResponse("Account ist gesperrt. Bitte versuchen Sie es in 10 Minuten erneut."));
+                    .body(new MessageResponse("Ein Fehler ist aufgetreten"));
         }
     }
 

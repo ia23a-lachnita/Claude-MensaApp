@@ -7,14 +7,20 @@ import org.springframework.security.authentication.event.AuthenticationSuccessEv
 import org.springframework.stereotype.Component;
 
 @Component
-public class AuthenticationSuccessListener implements ApplicationListener<AuthenticationSuccessEvent> {
+public class AuthenticationSuccessListener
+        implements ApplicationListener<AuthenticationSuccessEvent> {
 
     @Autowired
     private BruteForceProtectionService bruteForceService;
 
     @Override
     public void onApplicationEvent(AuthenticationSuccessEvent event) {
-//        String email = event.getAuthentication().getName();
-//        bruteForceService.resetFailedAttempts(email);
+        Object principal = event.getAuthentication().getPrincipal();
+        if (principal instanceof UserDetailsImpl userDetails) {
+            // only reset for users who do *not* have MFA enabled
+            if (!userDetails.isMfaEnabled()) {
+                bruteForceService.resetFailedAttempts(userDetails.getUsername());
+            }
+        }
     }
 }
