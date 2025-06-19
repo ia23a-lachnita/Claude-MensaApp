@@ -49,7 +49,15 @@ export const verifyMfa = (email, password, code) => async (dispatch) => {
     dispatch(loginSuccess(response.data));
     toast.success('Erfolgreich angemeldet!');
   } catch (error) {
-    const message = error.response?.data?.message || 'MFA-Verifizierung fehlgeschlagen';
+    let message = error.response?.data?.message || 'MFA-Verifizierung fehlgeschlagen';
+
+    // Handle account lock specifically for MFA verification
+    if (error.response?.status === 423) { // HTTP 423 Locked
+      message = 'Account ist gesperrt. Bitte versuchen Sie es in 10 Minuten erneut.';
+    } else if (error.response?.data?.message) {
+      message = error.response.data.message;
+    }
+
     dispatch(loginError(message));
     toast.error(message);
   }

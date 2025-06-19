@@ -14,7 +14,7 @@ public class AuthenticationSuccessListener implements ApplicationListener<Authen
 
     @Override
     public void onApplicationEvent(AuthenticationSuccessEvent event) {
-        String email = event.getAuthentication().getName();
-        bruteForceService.resetFailedAttempts(email);
+//        String email = event.getAuthentication().getName();
+//        bruteForceService.resetFailedAttempts(email);
     }
 }

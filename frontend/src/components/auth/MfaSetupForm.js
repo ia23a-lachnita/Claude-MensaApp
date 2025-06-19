@@ -14,13 +14,15 @@ import {
   Stepper,
   Step,
   StepLabel,
+  Alert,
 } from '@mui/material';
 import { setupMfa, enableMfa, disableMfa } from '../../store/auth/authActions';
+import { toast } from 'react-toastify';
 
 const MfaCodeSchema = Yup.object().shape({
   code: Yup.string()
-    .matches(/^\d{6}$/, 'Code muss 6 Ziffern enthalten')
-    .required('Code ist erforderlich'),
+      .matches(/^\d{6}$/, 'Code muss 6 Ziffern enthalten')
+      .required('Code ist erforderlich'),
 });
 
 const MfaSetupForm = () => {
@@ -40,8 +42,8 @@ const MfaSetupForm = () => {
   }, [user]);
 
   const steps = mfaEnabled
-    ? ['MFA deaktivieren']
-    : ['QR-Code scannen', 'Code verifizieren'];
+      ? ['MFA deaktivieren']
+      : ['QR-Code scannen', 'Code verifizieren'];
 
   const handleSetup = async () => {
     setLoading(true);
@@ -70,7 +72,15 @@ const MfaSetupForm = () => {
         setError('Ungültiger Code');
       }
     } catch (error) {
-      setError('Fehler beim Aktivieren der Zwei-Faktor-Authentifizierung');
+      // Handle account lock specifically for MFA enable
+      if (error.response?.status === 423) { // HTTP 423 Locked
+        setError('Ihr Account wurde nach 3 fehlgeschlagenen MFA-Versuchen für 10 Minuten gesperrt. Sie erhalten eine E-Mail-Benachrichtigung.');
+        toast.error('Account wurde gesperrt. Bitte versuchen Sie es in 10 Minuten erneut.', {
+          autoClose: 8000
+        });
+      } else {
+        setError('Fehler beim Aktivieren der Zwei-Faktor-Authentifizierung');
+      }
     } finally {
       setLoading(false);
     }
@@ -87,7 +97,15 @@ const MfaSetupForm = () => {
         setError('Ungültiger Code');
       }
     } catch (error) {
-      setError('Fehler beim Deaktivieren der Zwei-Faktor-Authentifizierung');
+      // Handle account lock specifically for MFA disable
+      if (error.response?.status === 423) { // HTTP 423 Locked
+        setError('Ihr Account wurde nach 3 fehlgeschlagenen MFA-Versuchen für 10 Minuten gesperrt. Sie erhalten eine E-Mail-Benachrichtigung.');
+        toast.error('Account wurde gesperrt. Bitte versuchen Sie es in 10 Minuten erneut.', {
+          autoClose: 8000
+        });
+      } else {
+        setError('Fehler beim Deaktivieren der Zwei-Faktor-Authentifizierung');
+      }
     } finally {
       setLoading(false);
     }
@@ -96,164 +114,184 @@ const MfaSetupForm = () => {
   const renderStepContent = (step) => {
     if (mfaEnabled) {
       return (
-        <Formik
-          initialValues={{ code: '' }}
-          validationSchema={MfaCodeSchema}
-          onSubmit={handleDisableMfa}
-        >
-          {({ errors, touched }) => (
-            <Form>
-              <Typography variant="body1" paragraph>
-                Um die Zwei-Faktor-Authentifizierung zu deaktivieren, geben Sie bitte den aktuellen Code aus Ihrer Authenticator-App ein.
-              </Typography>
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <Field
-                    as={TextField}
-                    fullWidth
-                    id="code"
-                    name="code"
-                    label="Authentifizierungscode"
-                    variant="outlined"
-                    error={touched.code && Boolean(errors.code)}
-                    helperText={touched.code && errors.code}
-                    autoComplete="off"
-                    inputProps={{ maxLength: 6 }}
-                  />
-                </Grid>
-                {error && (
-                  <Grid item xs={12}>
-                    <Typography color="error">{error}</Typography>
+          <Formik
+              initialValues={{ code: '' }}
+              validationSchema={MfaCodeSchema}
+              onSubmit={handleDisableMfa}
+          >
+            {({ errors, touched }) => (
+                <Form>
+                  <Typography variant="body1" paragraph>
+                    Um die Zwei-Faktor-Authentifizierung zu deaktivieren, geben Sie bitte den aktuellen Code aus Ihrer Authenticator-App ein.
+                  </Typography>
+
+                  {/* Security warning for disable */}
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    <Typography variant="body2">
+                      <strong>Sicherheitshinweis:</strong> Nach 3 fehlgeschlagenen Versuchen wird Ihr Account für 10 Minuten gesperrt.
+                    </Typography>
+                  </Alert>
+
+                  <Grid container spacing={3}>
+                    <Grid item xs={12}>
+                      <Field
+                          as={TextField}
+                          fullWidth
+                          id="code"
+                          name="code"
+                          label="Authentifizierungscode"
+                          variant="outlined"
+                          error={touched.code && Boolean(errors.code)}
+                          helperText={touched.code && errors.code}
+                          autoComplete="off"
+                          inputProps={{ maxLength: 6 }}
+                      />
+                    </Grid>
+                    {error && (
+                        <Grid item xs={12}>
+                          <Alert severity="error">
+                            <Typography>{error}</Typography>
+                          </Alert>
+                        </Grid>
+                    )}
+                    <Grid item xs={12}>
+                      <Button
+                          type="submit"
+                          fullWidth
+                          variant="contained"
+                          color="secondary"
+                          disabled={loading}
+                          sx={{ py: 1.5 }}
+                          startIcon={loading && <CircularProgress size={20} color="inherit" />}
+                      >
+                        {loading ? 'Wird deaktiviert...' : 'MFA deaktivieren'}
+                      </Button>
+                    </Grid>
                   </Grid>
-                )}
-                <Grid item xs={12}>
-                  <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    color="secondary"
-                    disabled={loading}
-                    sx={{ py: 1.5 }}
-                    startIcon={loading && <CircularProgress size={20} color="inherit" />}
-                  >
-                    {loading ? 'Wird deaktiviert...' : 'MFA deaktivieren'}
-                  </Button>
-                </Grid>
-              </Grid>
-            </Form>
-          )}
-        </Formik>
+                </Form>
+            )}
+          </Formik>
       );
     }
 
     switch (step) {
       case 0:
         return (
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="body1" paragraph>
-              Die Zwei-Faktor-Authentifizierung erhöht die Sicherheit Ihres Kontos. Sobald aktiviert, müssen Sie bei jeder Anmeldung einen Code aus einer Authenticator-App eingeben.
-            </Typography>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSetup}
-              disabled={loading}
-              sx={{ mt: 2 }}
-              startIcon={loading && <CircularProgress size={20} color="inherit" />}
-            >
-              {loading ? 'Wird eingerichtet...' : 'MFA einrichten'}
-            </Button>
-          </Box>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="body1" paragraph>
+                Die Zwei-Faktor-Authentifizierung erhöht die Sicherheit Ihres Kontos. Sobald aktiviert, müssen Sie bei jeder Anmeldung einen Code aus einer Authenticator-App eingeben.
+              </Typography>
+              <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleSetup}
+                  disabled={loading}
+                  sx={{ mt: 2 }}
+                  startIcon={loading && <CircularProgress size={20} color="inherit" />}
+              >
+                {loading ? 'Wird eingerichtet...' : 'MFA einrichten'}
+              </Button>
+            </Box>
         );
       case 1:
         return (
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="body1" paragraph>
-              Scannen Sie den QR-Code mit Ihrer Authenticator-App (z.B. Google Authenticator, Authy, Microsoft Authenticator) oder geben Sie den Code manuell ein.
-            </Typography>
-            <Box sx={{ my: 3 }}>
-              {qrCodeUrl && (
-                <img
-                  src={qrCodeUrl}
-                  alt="QR-Code für Zwei-Faktor-Authentifizierung"
-                  style={{ maxWidth: '100%', height: 'auto' }}
-                />
-              )}
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="body1" paragraph>
+                Scannen Sie den QR-Code mit Ihrer Authenticator-App (z.B. Google Authenticator, Authy, Microsoft Authenticator) oder geben Sie den Code manuell ein.
+              </Typography>
+              <Box sx={{ my: 3 }}>
+                {qrCodeUrl && (
+                    <img
+                        src={qrCodeUrl}
+                        alt="QR-Code für Zwei-Faktor-Authentifizierung"
+                        style={{ maxWidth: '100%', height: 'auto' }}
+                    />
+                )}
+              </Box>
+              <Typography variant="subtitle2" paragraph>
+                Manueller Einrichtungscode:
+              </Typography>
+              <Typography
+                  variant="body2"
+                  sx={{
+                    backgroundColor: 'grey.100',
+                    padding: 2,
+                    borderRadius: 1,
+                    fontFamily: 'monospace',
+                    wordBreak: 'break-all',
+                  }}
+              >
+                {secret}
+              </Typography>
+              <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => setActiveStep(2)}
+                  sx={{ mt: 3 }}
+              >
+                Weiter
+              </Button>
             </Box>
-            <Typography variant="subtitle2" paragraph>
-              Manueller Einrichtungscode:
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{
-                backgroundColor: 'grey.100',
-                padding: 2,
-                borderRadius: 1,
-                fontFamily: 'monospace',
-                wordBreak: 'break-all',
-              }}
-            >
-              {secret}
-            </Typography>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => setActiveStep(2)}
-              sx={{ mt: 3 }}
-            >
-              Weiter
-            </Button>
-          </Box>
         );
       case 2:
         return (
-          <Formik
-            initialValues={{ code: '' }}
-            validationSchema={MfaCodeSchema}
-            onSubmit={handleEnableMfa}
-          >
-            {({ errors, touched }) => (
-              <Form>
-                <Typography variant="body1" paragraph>
-                  Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App ein, um die Einrichtung abzuschliessen.
-                </Typography>
-                <Grid container spacing={3}>
-                  <Grid item xs={12}>
-                    <Field
-                      as={TextField}
-                      fullWidth
-                      id="code"
-                      name="code"
-                      label="Authentifizierungscode"
-                      variant="outlined"
-                      error={touched.code && Boolean(errors.code)}
-                      helperText={touched.code && errors.code}
-                      autoComplete="off"
-                      inputProps={{ maxLength: 6 }}
-                    />
-                  </Grid>
-                  {error && (
-                    <Grid item xs={12}>
-                      <Typography color="error">{error}</Typography>
+            <Formik
+                initialValues={{ code: '' }}
+                validationSchema={MfaCodeSchema}
+                onSubmit={handleEnableMfa}
+            >
+              {({ errors, touched }) => (
+                  <Form>
+                    <Typography variant="body1" paragraph>
+                      Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App ein, um die Einrichtung abzuschliessen.
+                    </Typography>
+
+                    {/* Security warning for enable */}
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                      <Typography variant="body2">
+                        <strong>Sicherheitshinweis:</strong> Nach 3 fehlgeschlagenen Versuchen wird Ihr Account für 10 Minuten gesperrt.
+                      </Typography>
+                    </Alert>
+
+                    <Grid container spacing={3}>
+                      <Grid item xs={12}>
+                        <Field
+                            as={TextField}
+                            fullWidth
+                            id="code"
+                            name="code"
+                            label="Authentifizierungscode"
+                            variant="outlined"
+                            error={touched.code && Boolean(errors.code)}
+                            helperText={touched.code && errors.code}
+                            autoComplete="off"
+                            inputProps={{ maxLength: 6 }}
+                        />
+                      </Grid>
+                      {error && (
+                          <Grid item xs={12}>
+                            <Alert severity="error">
+                              <Typography>{error}</Typography>
+                            </Alert>
+                          </Grid>
+                      )}
+                      <Grid item xs={12}>
+                        <Button
+                            type="submit"
+                            fullWidth
+                            variant="contained"
+                            color="primary"
+                            disabled={loading}
+                            sx={{ py: 1.5 }}
+                            startIcon={loading && <CircularProgress size={20} color="inherit" />}
+                        >
+                          {loading ? 'Wird aktiviert...' : 'MFA aktivieren'}
+                        </Button>
+                      </Grid>
                     </Grid>
-                  )}
-                  <Grid item xs={12}>
-                    <Button
-                      type="submit"
-                      fullWidth
-                      variant="contained"
-                      color="primary"
-                      disabled={loading}
-                      sx={{ py: 1.5 }}
-                      startIcon={loading && <CircularProgress size={20} color="inherit" />}
-                    >
-                      {loading ? 'Wird aktiviert...' : 'MFA aktivieren'}
-                    </Button>
-                  </Grid>
-                </Grid>
-              </Form>
-            )}
-          </Formik>
+                  </Form>
+              )}
+            </Formik>
         );
       default:
         return null;
@@ -261,23 +299,23 @@ const MfaSetupForm = () => {
   };
 
   return (
-    <Paper elevation={3} sx={{ p: 4 }}>
-      <Typography variant="h5" gutterBottom align="center">
-        Zwei-Faktor-Authentifizierung
-      </Typography>
-      
-      <Box sx={{ width: '100%', mb: 4 }}>
-        <Stepper activeStep={activeStep} alternativeLabel>
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-      </Box>
-      
-      {renderStepContent(activeStep)}
-    </Paper>
+      <Paper elevation={3} sx={{ p: 4 }}>
+        <Typography variant="h5" gutterBottom align="center">
+          Zwei-Faktor-Authentifizierung
+        </Typography>
+
+        <Box sx={{ width: '100%', mb: 4 }}>
+          <Stepper activeStep={activeStep} alternativeLabel>
+            {steps.map((label) => (
+                <Step key={label}>
+                  <StepLabel>{label}</StepLabel>
+                </Step>
+            ))}
+          </Stepper>
+        </Box>
+
+        {renderStepContent(activeStep)}
+      </Paper>
   );
 };
 

@@ -10,6 +10,7 @@ import ch.mensaapp.api.repositories.UserRepository;
 import ch.mensaapp.api.security.JwtUtils;
 import ch.mensaapp.api.security.MfaUtils;
 import ch.mensaapp.api.security.UserDetailsImpl;
+import ch.mensaapp.api.services.BruteForceProtectionService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -47,6 +48,9 @@ public class AuthController {
     @Autowired
     private MfaUtils mfaUtils;
 
+    @Autowired
+    private BruteForceProtectionService bruteForceService;
+
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         try {
@@ -82,7 +86,7 @@ public class AuthController {
                     .body(new MessageResponse("Ungültige E-Mail oder Passwort"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new MessageResponse("Ein Fehler ist aufgetreten"));
+                    .body(new MessageResponse("Account ist gesperrt. Bitte versuchen Sie es in 10 Minuten erneut."));
         }
     }
 
@@ -92,7 +96,22 @@ public class AuthController {
             User user = userRepository.findByEmail(verificationRequest.getEmail())
                     .orElseThrow(() -> new RuntimeException("Benutzer nicht gefunden"));
 
+            // Check if account is locked due to failed MFA attempts
+            if (!user.isAccountNonLocked()) {
+                // Try to unlock if time has expired
+                if (!bruteForceService.unlockWhenTimeExpired(user)) {
+                    return ResponseEntity.status(HttpStatus.LOCKED) // 423 Locked
+                            .body(new MessageResponse("Account ist gesperrt. Bitte versuchen Sie es in 10 Minuten erneut."));
+                }
+                // If unlocked, reload user to get updated status
+                user = userRepository.findByEmail(verificationRequest.getEmail()).get();
+            }
+
+            // Verify the MFA code
             if (mfaUtils.verifyCode(verificationRequest.getCode(), user.getMfaSecret())) {
+                // MFA verification successful - reset failed attempts and proceed with login
+                bruteForceService.resetFailedAttempts(verificationRequest.getEmail());
+
                 Authentication authentication = authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(verificationRequest.getEmail(), verificationRequest.getPassword()));
 
@@ -111,6 +130,8 @@ public class AuthController {
                         userDetails.getNachname(),
                         roles));
             } else {
+                // MFA verification failed - register failed attempt
+                bruteForceService.registerFailedAttempt(verificationRequest.getEmail());
                 return ResponseEntity.badRequest().body(new MessageResponse("Ungültiger MFA-Code"));
             }
         } catch (Exception e) {
@@ -144,7 +165,6 @@ public class AuthController {
         return ResponseEntity.ok(new MessageResponse("Benutzer erfolgreich registriert!"));
     }
 
-    // CORRECTED: This should accept MfaSetupRequest, not String
     @PostMapping("/mfa-setup")
     public ResponseEntity<?> setupMfa(@Valid @RequestBody MfaSetupRequest setupRequest) {
         try {
@@ -163,18 +183,33 @@ public class AuthController {
         }
     }
 
-    // CORRECTED: This should accept MfaEnableRequest, not String
     @PostMapping("/mfa-enable")
     public ResponseEntity<?> enableMfa(@Valid @RequestBody MfaEnableRequest enableRequest) {
         try {
             User user = userRepository.findByEmail(enableRequest.getEmail())
                     .orElseThrow(() -> new RuntimeException("Benutzer nicht gefunden"));
 
+            // Check if account is locked due to failed MFA attempts
+            if (!user.isAccountNonLocked()) {
+                // Try to unlock if time has expired
+                if (!bruteForceService.unlockWhenTimeExpired(user)) {
+                    return ResponseEntity.status(HttpStatus.LOCKED) // 423 Locked
+                            .body(new MessageResponse("Account ist gesperrt. Bitte versuchen Sie es in 10 Minuten erneut."));
+                }
+                // If unlocked, reload user to get updated status
+                user = userRepository.findByEmail(enableRequest.getEmail()).get();
+            }
+
             if (mfaUtils.verifyCode(enableRequest.getCode(), user.getMfaSecret())) {
+                // MFA enable successful - reset failed attempts
+                bruteForceService.resetFailedAttempts(enableRequest.getEmail());
+
                 user.setMfaEnabled(true);
                 userRepository.save(user);
                 return ResponseEntity.ok(new MessageResponse("MFA erfolgreich aktiviert"));
             } else {
+                // MFA verification failed - register failed attempt
+                bruteForceService.registerFailedAttempt(enableRequest.getEmail());
                 return ResponseEntity.badRequest().body(new MessageResponse("Ungültiger MFA-Code"));
             }
         } catch (Exception e) {
@@ -182,19 +217,34 @@ public class AuthController {
         }
     }
 
-    // CORRECTED: This should accept MfaDisableRequest, not String
     @PostMapping("/mfa-disable")
     public ResponseEntity<?> disableMfa(@Valid @RequestBody MfaDisableRequest disableRequest) {
         try {
             User user = userRepository.findByEmail(disableRequest.getEmail())
                     .orElseThrow(() -> new RuntimeException("Benutzer nicht gefunden"));
 
+            // Check if account is locked due to failed MFA attempts
+            if (!user.isAccountNonLocked()) {
+                // Try to unlock if time has expired
+                if (!bruteForceService.unlockWhenTimeExpired(user)) {
+                    return ResponseEntity.status(HttpStatus.LOCKED) // 423 Locked
+                            .body(new MessageResponse("Account ist gesperrt. Bitte versuchen Sie es in 10 Minuten erneut."));
+                }
+                // If unlocked, reload user to get updated status
+                user = userRepository.findByEmail(disableRequest.getEmail()).get();
+            }
+
             if (mfaUtils.verifyCode(disableRequest.getCode(), user.getMfaSecret())) {
+                // MFA disable successful - reset failed attempts
+                bruteForceService.resetFailedAttempts(disableRequest.getEmail());
+
                 user.setMfaEnabled(false);
                 user.setMfaSecret(null);
                 userRepository.save(user);
                 return ResponseEntity.ok(new MessageResponse("MFA erfolgreich deaktiviert"));
             } else {
+                // MFA verification failed - register failed attempt
+                bruteForceService.registerFailedAttempt(disableRequest.getEmail());
                 return ResponseEntity.badRequest().body(new MessageResponse("Ungültiger MFA-Code"));
             }
         } catch (Exception e) {
