@@ -362,7 +362,7 @@ public class DataLoader implements CommandLineRunner {
 
                 menuplan.setGerichte(tagesGerichte);
 
-                // Add drinks to the menu plan (if you've updated the Menuplan entity)
+                // Add drinks to the menu plan (if updated the Menuplan entity)
                 if (!alleGetraenke.isEmpty()) {
                     Set<Getraenk> tagesGetraenke = new HashSet<>();
 

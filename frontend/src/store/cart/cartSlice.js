@@ -26,6 +26,10 @@ export const cartSlice = createSlice({
     // NEW: Add drinks to cart
     addDrinkToCart: (state, action) => {
       const { getraenk, anzahl } = action.payload;
+      // Ensure drinks array exists
+      if (!state.drinks) {
+        state.drinks = [];
+      }
       const existingDrinkIndex = state.drinks.findIndex(item => item.getraenk.id === getraenk.id);
 
       if (existingDrinkIndex !== -1) {
@@ -43,6 +47,10 @@ export const cartSlice = createSlice({
     // NEW: Remove drinks from cart
     removeDrinkFromCart: (state, action) => {
       const getraenkId = action.payload;
+      // Ensure drinks array exists
+      if (!state.drinks) {
+        state.drinks = [];
+      }
       state.drinks = state.drinks.filter(item => item.getraenk.id !== getraenkId);
     },
 
@@ -58,6 +66,10 @@ export const cartSlice = createSlice({
     // NEW: Update drink quantity
     updateCartDrinkQuantity: (state, action) => {
       const { getraenkId, anzahl } = action.payload;
+      // Ensure drinks array exists
+      if (!state.drinks) {
+        state.drinks = [];
+      }
       const existingDrink = state.drinks.find(item => item.getraenk.id === getraenkId);
 
       if (existingDrink) {
@@ -97,15 +109,24 @@ export const {
   clearCart,
 } = cartSlice.actions;
 
-// Updated selectors
-export const selectCartItems = (state) => state.cart.items;
-export const selectCartDrinks = (state) => state.cart.drinks;
-export const selectCartItemsCount = (state) =>
-    state.cart.items.reduce((count, item) => count + item.anzahl, 0) +
-    state.cart.drinks.reduce((count, item) => count + item.anzahl, 0);
-export const selectCartTotal = (state) =>
-    state.cart.items.reduce((total, item) => total + (item.gericht.preis * item.anzahl), 0) +
-    state.cart.drinks.reduce((total, item) => total + (item.getraenk.preis * item.anzahl), 0);
+// Updated and SAFE selectors
+export const selectCartItems = (state) => state.cart.items || [];
+export const selectCartDrinks = (state) => state.cart.drinks || [];
+
+export const selectCartItemsCount = (state) => {
+  const items = state.cart.items || [];
+  const drinks = state.cart.drinks || [];
+  return items.reduce((count, item) => count + item.anzahl, 0) +
+      drinks.reduce((count, item) => count + item.anzahl, 0);
+};
+
+export const selectCartTotal = (state) => {
+  const items = state.cart.items || [];
+  const drinks = state.cart.drinks || [];
+  return items.reduce((total, item) => total + (item.gericht.preis * item.anzahl), 0) +
+      drinks.reduce((total, item) => total + (item.getraenk.preis * item.anzahl), 0);
+};
+
 export const selectAbholDatum = (state) => state.cart.abholDatum;
 export const selectAbholZeit = (state) => state.cart.abholZeit;
 export const selectBemerkungen = (state) => state.cart.bemerkungen;
