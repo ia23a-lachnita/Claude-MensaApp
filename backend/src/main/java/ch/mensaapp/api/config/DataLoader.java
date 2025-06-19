@@ -98,6 +98,10 @@ public class DataLoader implements CommandLineRunner {
         admin.setEmail("admin@mensaapp.ch");
         admin.setPassword(passwordEncoder.encode("password"));
         admin.setRoles(new HashSet<>(Collections.singletonList(adminRole)));
+        // Brute Force Protection Defaults
+        admin.setFailedAttempt(0);
+        admin.setAccountNonLocked(true);
+        admin.setLockTime(null);
         userRepository.save(admin);
 
         // Create staff user
@@ -107,6 +111,10 @@ public class DataLoader implements CommandLineRunner {
         staff.setEmail("staff@mensaapp.ch");
         staff.setPassword(passwordEncoder.encode("password"));
         staff.setRoles(new HashSet<>(Collections.singletonList(staffRole)));
+        // Brute Force Protection Defaults
+        staff.setFailedAttempt(0);
+        staff.setAccountNonLocked(true);
+        staff.setLockTime(null);
         userRepository.save(staff);
 
         // Create regular users
@@ -116,6 +124,10 @@ public class DataLoader implements CommandLineRunner {
         user1.setEmail("max@example.com");
         user1.setPassword(passwordEncoder.encode("password"));
         user1.setRoles(new HashSet<>(Collections.singletonList(userRole)));
+        // Brute Force Protection Defaults
+        user1.setFailedAttempt(0);
+        user1.setAccountNonLocked(true);
+        user1.setLockTime(null);
         userRepository.save(user1);
 
         User user2 = new User();
@@ -124,9 +136,13 @@ public class DataLoader implements CommandLineRunner {
         user2.setEmail("anna@example.com");
         user2.setPassword(passwordEncoder.encode("password"));
         user2.setRoles(new HashSet<>(Collections.singletonList(userRole)));
+        // Brute Force Protection Defaults
+        user2.setFailedAttempt(0);
+        user2.setAccountNonLocked(true);
+        user2.setLockTime(null);
         userRepository.save(user2);
 
-        System.out.println("Created users: admin, staff, and 2 regular users");
+        System.out.println("Created users: admin, staff, and 2 regular users with brute force protection enabled");
     }
 
     private void createGerichte() {

@@ -29,12 +29,12 @@ const RegisterSchema = Yup.object().shape({
     .email('Ungültige E-Mail-Adresse')
     .required('E-Mail ist erforderlich'),
   password: Yup.string()
-    .min(8, 'Passwort muss mindestens 8 Zeichen lang sein')
-    .matches(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      'Passwort muss mindestens einen Grossbuchstaben, einen Kleinbuchstaben und eine Zahl enthalten'
-    )
-    .required('Passwort ist erforderlich'),
+      .min(8, 'Passwort muss mindestens 8 Zeichen lang sein')
+      .matches(
+          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
+          'Passwort muss mindestens einen Grossbuchstaben, einen Kleinbuchstaben, eine Zahl und ein Sonderzeichen (@$!%*?&) enthalten'
+      )
+      .required('Passwort ist erforderlich'),
   confirmPassword: Yup.string()
     .oneOf([Yup.ref('password'), null], 'Passwörter müssen übereinstimmen')
     .required('Passwortbestätigung ist erforderlich'),

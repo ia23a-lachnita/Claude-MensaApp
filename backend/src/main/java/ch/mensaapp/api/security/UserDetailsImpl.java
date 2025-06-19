@@ -22,11 +22,13 @@ public class UserDetailsImpl implements UserDetails {
     private final String nachname;
     private final boolean mfaEnabled;
     private final String mfaSecret;
+    // Account Lock Status
+    private final boolean accountNonLocked;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public UserDetailsImpl(Long id, String email, String password, String vorname, String nachname, 
-                          boolean mfaEnabled, String mfaSecret, 
-                          Collection<? extends GrantedAuthority> authorities) {
+    public UserDetailsImpl(Long id, String email, String password, String vorname, String nachname,
+                           boolean mfaEnabled, String mfaSecret, boolean accountNonLocked,
+                           Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.email = email;
         this.password = password;
@@ -34,6 +36,7 @@ public class UserDetailsImpl implements UserDetails {
         this.nachname = nachname;
         this.mfaEnabled = mfaEnabled;
         this.mfaSecret = mfaSecret;
+        this.accountNonLocked = accountNonLocked;
         this.authorities = authorities;
     }
 
@@ -50,6 +53,7 @@ public class UserDetailsImpl implements UserDetails {
                 user.getNachname(),
                 user.isMfaEnabled(),
                 user.getMfaSecret(),
+                user.isAccountNonLocked(),
                 authorities);
     }
 
@@ -83,6 +87,11 @@ public class UserDetailsImpl implements UserDetails {
     }
 
     @Override
+    public boolean isAccountNonLocked() {
+        return accountNonLocked;
+    }
+
+    @Override
     public String getPassword() {
         return password;
     }
@@ -94,11 +103,6 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
         return true;
     }
 

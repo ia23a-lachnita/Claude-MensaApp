@@ -25,9 +25,19 @@ export const login = (email, password) => async (dispatch) => {
       toast.success('Erfolgreich angemeldet!');
     }
   } catch (error) {
-    const message = error.response?.data?.message || 'Anmeldung fehlgeschlagen';
+    let message = 'Anmeldung fehlgeschlagen';
+
+    // Spezielle Behandlung für verschiedene HTTP Status Codes
+    if (error.response?.status === 423) { // Account gesperrt
+      message = 'Account ist gesperrt. Bitte versuchen Sie es in 10 Minuten erneut.';
+    } else if (error.response?.status === 401) { // Ungültige Credentials
+      message = 'Ungültige E-Mail oder Passwort';
+    } else if (error.response?.data?.message) {
+      message = error.response.data.message;
+    }
+
     dispatch(loginError(message));
-    toast.error(message);
+    // toast.error wird im LoginForm.js behandelt, nicht hier
   }
 };
 

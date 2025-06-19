@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -32,12 +34,21 @@ public class User {
     private String password;
 
     private String mfaSecret;
-    
+
     private boolean mfaEnabled = false;
 
+    // Brute Force Protection Felder
+    @Column(nullable = false)
+    private int failedAttempt = 0;
+
+    @Column(nullable = false)
+    private boolean accountNonLocked = true;
+
+    private Date lockTime;
+
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "user_roles", 
-               joinColumns = @JoinColumn(name = "user_id"),
-               inverseJoinColumns = @JoinColumn(name = "role_id"))
+    @JoinTable(name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
 }

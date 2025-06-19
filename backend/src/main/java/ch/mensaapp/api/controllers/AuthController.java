@@ -12,9 +12,9 @@ import ch.mensaapp.api.security.MfaUtils;
 import ch.mensaapp.api.security.UserDetailsImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -49,26 +49,40 @@ public class AuthController {
 
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-        if (userDetails.isMfaEnabled()) {
-            return ResponseEntity.ok(new MfaRequiredResponse(userDetails.getEmail()));
-        } else {
-            String jwt = jwtUtils.generateJwtToken(authentication);
-            List<String> roles = userDetails.getAuthorities().stream()
-                    .map(item -> item.getAuthority())
-                    .collect(Collectors.toList());
+            if (userDetails.isMfaEnabled()) {
+                return ResponseEntity.ok(new MfaRequiredResponse(userDetails.getEmail()));
+            } else {
+                String jwt = jwtUtils.generateJwtToken(authentication);
+                List<String> roles = userDetails.getAuthorities().stream()
+                        .map(item -> item.getAuthority())
+                        .collect(Collectors.toList());
 
-            return ResponseEntity.ok(new JwtResponse(jwt,
-                    userDetails.getId(),
-                    userDetails.getUsername(),
-                    userDetails.getVorname(),
-                    userDetails.getNachname(),
-                    roles));
+                return ResponseEntity.ok(new JwtResponse(jwt,
+                        userDetails.getId(),
+                        userDetails.getUsername(),
+                        userDetails.getVorname(),
+                        userDetails.getNachname(),
+                        roles));
+            }
+        } catch (DisabledException e) {
+            return ResponseEntity.status(HttpStatus.LOCKED) // 423 Locked
+                    .body(new MessageResponse("Account ist deaktiviert"));
+        } catch (AccountExpiredException e) {
+            return ResponseEntity.status(HttpStatus.LOCKED) // 423 Locked
+                    .body(new MessageResponse("Account ist gesperrt. Bitte versuchen Sie es in 10 Minuten erneut."));
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED) // 401 Unauthorized
+                    .body(new MessageResponse("Ungültige E-Mail oder Passwort"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Ein Fehler ist aufgetreten"));
         }
     }
 

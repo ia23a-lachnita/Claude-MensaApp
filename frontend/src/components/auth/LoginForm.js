@@ -35,8 +35,21 @@ const LoginForm = () => {
 
   const from = location.state?.from || '/';
 
-  const handleSubmit = (values) => {
-    dispatch(login(values.email, values.password));
+  const handleSubmit = async (values) => {
+    try {
+      await dispatch(login(values.email, values.password));
+    } catch (error) {
+      // Spezielle Behandlung für gesperrte Accounts
+      if (error.response?.status === 423) { // HTTP 423 Locked
+        toast.error('Ihr Account wurde nach 3 Fehlversuchen für 10 Minuten gesperrt. Bitte versuchen Sie es später erneut.', {
+          autoClose: 8000 // Längere Anzeige für wichtige Meldung
+        });
+      } else if (error.response?.status === 401) {
+        toast.error('Ungültige Anmeldedaten');
+      } else {
+        toast.error('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
+      }
+    }
   };
 
   const handleMfaSuccess = () => {
@@ -48,10 +61,10 @@ const LoginForm = () => {
   };
 
   if (mfaRequired) {
-    return <MfaVerificationForm 
-      email={mfaEmail} 
-      password={mfaPassword} 
-      onSuccess={handleMfaSuccess} 
+    return <MfaVerificationForm
+      email={mfaEmail}
+      password={mfaPassword}
+      onSuccess={handleMfaSuccess}
     />;
   }
 
