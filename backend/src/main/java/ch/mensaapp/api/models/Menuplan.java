@@ -28,4 +28,11 @@ public class Menuplan {
             joinColumns = @JoinColumn(name = "menuplan_id"),
             inverseJoinColumns = @JoinColumn(name = "gericht_id"))
     private Set<Gericht> gerichte = new HashSet<>();
+
+    // ADDED: Drinks relationship
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "menuplan_getraenke",
+            joinColumns = @JoinColumn(name = "menuplan_id"),
+            inverseJoinColumns = @JoinColumn(name = "getraenk_id"))
+    private Set<Getraenk> getraenke = new HashSet<>();
 }

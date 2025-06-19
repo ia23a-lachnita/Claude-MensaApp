@@ -37,13 +37,14 @@ public class User {
 
     private boolean mfaEnabled = false;
 
-    // Brute Force Protection Felder
-    @Column(nullable = false)
+    // Brute Force Protection Felder - FIXED: Added default values in column definition
+    @Column(name = "failed_attempt", nullable = false, columnDefinition = "integer default 0")
     private int failedAttempt = 0;
 
-    @Column(nullable = false)
+    @Column(name = "account_non_locked", nullable = false, columnDefinition = "boolean default true")
     private boolean accountNonLocked = true;
 
+    @Column(name = "lock_time")
     private Date lockTime;
 
     @ManyToMany(fetch = FetchType.LAZY)
