@@ -23,18 +23,15 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Transactional
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Benutzer mit E-Mail " + email + " nicht gefunden"));
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("Benutzer mit E-Mail " + email + " nicht gefunden"));
 
-        // Prüfe ob Account entsperrt werden kann
-        if (!user.isAccountNonLocked()) {
-            if (bruteForceService.unlockWhenTimeExpired(user)) {
-                // Account wurde entsperrt, lade User neu
-                user = userRepository.findByEmail(email).get();
-            } else {
-                throw new AccountExpiredException("Account ist gesperrt. Versuchen Sie es später erneut.");
-            }
+        // Versuch, gesperrte Accounts nach Wartezeit automatisch zu entsperren
+        if (!user.isAccountNonLocked() && bruteForceService.unlockWhenTimeExpired(user)) {
+            user = userRepository.findByEmail(email).get();
         }
 
+        // Gebe UserDetailsImpl zurück und lass Spring die Sperr-Checks machen
         return UserDetailsImpl.build(user);
     }
 }

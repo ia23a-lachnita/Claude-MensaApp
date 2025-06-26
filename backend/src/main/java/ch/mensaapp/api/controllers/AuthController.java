@@ -55,7 +55,11 @@ public class AuthController {
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+                    new UsernamePasswordAuthenticationToken(
+                            loginRequest.getEmail(),
+                            loginRequest.getPassword()
+                    )
+            );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -63,31 +67,35 @@ public class AuthController {
             if (userDetails.isMfaEnabled()) {
                 return ResponseEntity.ok(new MfaRequiredResponse(userDetails.getEmail()));
             } else {
-                // reset here
                 bruteForceService.resetFailedAttempts(userDetails.getUsername());
-
                 String jwt = jwtUtils.generateJwtToken(authentication);
                 List<String> roles = userDetails.getAuthorities().stream()
-                        .map(item -> item.getAuthority())
+                        .map(a -> a.getAuthority())
                         .collect(Collectors.toList());
 
-                return ResponseEntity.ok(new JwtResponse(jwt,
+                return ResponseEntity.ok(new JwtResponse(
+                        jwt,
                         userDetails.getId(),
                         userDetails.getUsername(),
                         userDetails.getVorname(),
                         userDetails.getNachname(),
-                        roles));
+                        roles
+                ));
             }
         } catch (DisabledException e) {
-            return ResponseEntity.status(HttpStatus.LOCKED) // 423 Locked
+            // ACCOUNT DISABLED
+            return ResponseEntity.status(HttpStatus.LOCKED)
                     .body(new MessageResponse("Account ist deaktiviert"));
-        } catch (AccountExpiredException e) {
-            return ResponseEntity.status(HttpStatus.LOCKED) // 423 Locked
-                    .body(new MessageResponse("Account ist gesperrt. Bitte versuchen Sie es in 10 Minuten erneut."));
+        } catch (LockedException e) {
+            // SPRING LOCKED EXCEPTION
+            return ResponseEntity.status(HttpStatus.LOCKED)
+                    .body(new MessageResponse("Account ist gesperrt. Bitte versuchen Sie es später erneut."));
         } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED) // 401 Unauthorized
+            // INVALID LOGIN
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new MessageResponse("Ungültige E-Mail oder Passwort"));
         } catch (Exception e) {
+            // ANY OTHER ERROR
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse("Ein Fehler ist aufgetreten"));
         }
