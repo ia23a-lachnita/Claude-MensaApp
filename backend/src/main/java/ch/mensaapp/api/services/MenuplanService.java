@@ -7,6 +7,8 @@ import ch.mensaapp.api.payload.response.MenuplanResponse;
 import ch.mensaapp.api.repositories.GerichtRepository;
 import ch.mensaapp.api.repositories.MenuplanRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,8 +26,9 @@ public class MenuplanService {
     @Autowired
     private GerichtRepository gerichtRepository;
 
+    @Cacheable("menuplan")
     public List<MenuplanResponse> getAlleMenuplaene() {
-        return menuplanRepository.findAll().stream()
+        return menuplanRepository.findAllOrderByDatumAsc().stream()
                 .map(MenuplanResponse::fromEntity)
                 .collect(Collectors.toList());
     }
@@ -35,12 +38,21 @@ public class MenuplanService {
                 .orElseThrow(() -> new RuntimeException("Menuplan nicht gefunden")));
     }
 
+    @Cacheable(value = "menuplan", key = "#datum")
     public MenuplanResponse getMenuplanByDatum(LocalDate datum) {
         return MenuplanResponse.fromEntity(menuplanRepository.findByDatum(datum)
                 .orElseThrow(() -> new RuntimeException("Kein Menuplan für dieses Datum verfügbar")));
     }
 
+    @Cacheable(value = "menuplan", key = "'future'")
+    public List<MenuplanResponse> getZukuenftigeMenuplaene() {
+        return menuplanRepository.findByDatumGreaterThanEqualOrderByDatumAsc(LocalDate.now()).stream()
+                .map(MenuplanResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
+    @CacheEvict(value = "menuplan", allEntries = true)
     public MenuplanResponse erstelleMenuplan(MenuplanRequest menuplanRequest) {
         if (menuplanRepository.findByDatum(menuplanRequest.getDatum()).isPresent()) {
             throw new RuntimeException("Für dieses Datum existiert bereits ein Menuplan");
@@ -61,6 +73,7 @@ public class MenuplanService {
     }
 
     @Transactional
+    @CacheEvict(value = "menuplan", allEntries = true)
     public MenuplanResponse aktualisiereMenuplan(Long id, MenuplanRequest menuplanRequest) {
         Menuplan menuplan = menuplanRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Menuplan nicht gefunden"));
@@ -85,6 +98,7 @@ public class MenuplanService {
     }
 
     @Transactional
+    @CacheEvict(value = "menuplan", allEntries = true)
     public void loescheMenuplan(Long id) {
         Menuplan menuplan = menuplanRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Menuplan nicht gefunden"));

@@ -1,6 +1,6 @@
 package ch.mensaapp.api.payload.request;
 
-import jakarta.validation.constraints.NotBlank;
+import ch.mensaapp.api.models.ZahlungsMethode;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -8,19 +8,19 @@ import java.math.BigDecimal;
 
 @Data
 public class ZahlungRequest {
-    @NotBlank
-    private String zahlungsMethode;
+    @NotNull
+    private ZahlungsMethode zahlungsMethode;
 
     @NotNull
     private BigDecimal betrag;
 
+    // Kreditkarte/Debitkarte Felder
     private String kartenNummer;
-    
     private String kartenName;
-    
     private String kartenCVV;
-    
     private String kartenAblaufMonat;
-    
     private String kartenAblaufJahr;
+    
+    // TWINT Felder
+    private String twintTelefonnummer;
 }

@@ -6,6 +6,8 @@ const initialState = {
   abholDatum: null,
   abholZeit: null,
   bemerkungen: '',
+  originalMenuDate: null, // Track the date from which first product was added
+  validationErrors: [], // Store real-time validation errors
 };
 
 export const cartSlice = createSlice({
@@ -13,13 +15,22 @@ export const cartSlice = createSlice({
   initialState,
   reducers: {
     addToCart: (state, action) => {
-      const { gericht, anzahl } = action.payload;
+      const { gericht, anzahl, menuDate } = action.payload;
       const existingItemIndex = state.items.findIndex(item => item.gericht.id === gericht.id);
+
+      // Set original menu date if this is the first item and no date is set
+      if (state.items.length === 0 && state.drinks.length === 0 && menuDate && !state.originalMenuDate) {
+        state.originalMenuDate = menuDate;
+        // Auto-set pickup date to the original menu date
+        if (!state.abholDatum) {
+          state.abholDatum = menuDate;
+        }
+      }
 
       if (existingItemIndex !== -1) {
         state.items[existingItemIndex].anzahl += anzahl;
       } else {
-        state.items.push({ gericht, anzahl });
+        state.items.push({ gericht, anzahl, originalMenuDate: menuDate });
       }
     },
 
@@ -92,6 +103,14 @@ export const cartSlice = createSlice({
       state.abholDatum = null;
       state.abholZeit = null;
       state.bemerkungen = '';
+      state.originalMenuDate = null;
+      state.validationErrors = [];
+    },
+    setValidationErrors: (state, action) => {
+      state.validationErrors = action.payload;
+    },
+    clearValidationErrors: (state) => {
+      state.validationErrors = [];
     },
   },
 });
@@ -107,6 +126,8 @@ export const {
   setAbholZeit,
   setBemerkungen,
   clearCart,
+  setValidationErrors,
+  clearValidationErrors,
 } = cartSlice.actions;
 
 // Updated and SAFE selectors
@@ -130,5 +151,7 @@ export const selectCartTotal = (state) => {
 export const selectAbholDatum = (state) => state.cart.abholDatum;
 export const selectAbholZeit = (state) => state.cart.abholZeit;
 export const selectBemerkungen = (state) => state.cart.bemerkungen;
+export const selectOriginalMenuDate = (state) => state.cart.originalMenuDate;
+export const selectValidationErrors = (state) => state.cart.validationErrors || [];
 
 export default cartSlice.reducer;

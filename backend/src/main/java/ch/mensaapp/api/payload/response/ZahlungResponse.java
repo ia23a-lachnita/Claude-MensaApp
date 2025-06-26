@@ -23,7 +23,7 @@ public class ZahlungResponse {
         response.setBestellungId(zahlung.getBestellung().getId());
         response.setBetrag(zahlung.getBetrag());
         response.setZeitpunkt(zahlung.getZeitpunkt());
-        response.setZahlungsMethode(zahlung.getZahlungsMethode());
+        response.setZahlungsMethode(zahlung.getZahlungsMethode().getDisplayName());
         response.setTransaktionsId(zahlung.getTransaktionsId());
         response.setErfolgreich(zahlung.isErfolgreich());
         response.setFehlerMeldung(zahlung.getFehlerMeldung());

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -27,9 +28,24 @@ public class MenuplanController {
         return ResponseEntity.ok(menuplanService.getAlleMenuplaene());
     }
 
+    @GetMapping("/zukuenftig")
+    public ResponseEntity<List<MenuplanResponse>> getZukuenftigeMenuplaene() {
+        return ResponseEntity.ok(menuplanService.getZukuenftigeMenuplaene());
+    }
+
     @GetMapping("/{id}")
-    public ResponseEntity<MenuplanResponse> getMenuplanById(@PathVariable Long id) {
+    public ResponseEntity<MenuplanResponse> getMenuplanById(@PathVariable("id") Long id) {
         return ResponseEntity.ok(menuplanService.getMenuplanById(id));
+    }
+
+    @GetMapping("/verfuegbare-daten")
+    public ResponseEntity<List<LocalDate>> getVerfuegbareDaten() {
+        List<LocalDate> verfuegbareDaten = menuplanService.getAlleMenuplaene().stream()
+                .map(menuplan -> menuplan.getDatum())
+                .filter(datum -> !datum.isBefore(LocalDate.now()))
+                .sorted()
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(verfuegbareDaten);
     }
 
     @GetMapping("/datum/{datum}")
@@ -39,20 +55,20 @@ public class MenuplanController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MENSA_ADMIN')")
     public ResponseEntity<MenuplanResponse> erstelleMenuplan(@Valid @RequestBody MenuplanRequest menuplanRequest) {
         return ResponseEntity.ok(menuplanService.erstelleMenuplan(menuplanRequest));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
-    public ResponseEntity<MenuplanResponse> aktualisiereMenuplan(@PathVariable Long id, @Valid @RequestBody MenuplanRequest menuplanRequest) {
+    @PreAuthorize("hasRole('MENSA_ADMIN')")
+    public ResponseEntity<MenuplanResponse> aktualisiereMenuplan(@PathVariable("id") Long id, @Valid @RequestBody MenuplanRequest menuplanRequest) {
         return ResponseEntity.ok(menuplanService.aktualisiereMenuplan(id, menuplanRequest));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
-    public ResponseEntity<MessageResponse> loescheMenuplan(@PathVariable Long id) {
+    @PreAuthorize("hasRole('MENSA_ADMIN')")
+    public ResponseEntity<MessageResponse> loescheMenuplan(@PathVariable("id") Long id) {
         menuplanService.loescheMenuplan(id);
         return ResponseEntity.ok(new MessageResponse("Menuplan erfolgreich gelöscht"));
     }

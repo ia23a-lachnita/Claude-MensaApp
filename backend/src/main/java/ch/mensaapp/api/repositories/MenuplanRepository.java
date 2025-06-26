@@ -2,6 +2,7 @@ package ch.mensaapp.api.repositories;
 
 import ch.mensaapp.api.models.Menuplan;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
@@ -12,4 +13,12 @@ public interface MenuplanRepository extends JpaRepository<Menuplan, Long> {
     Optional<Menuplan> findByDatum(LocalDate datum);
     List<Menuplan> findByDatumBetween(LocalDate startDate, LocalDate endDate);
     List<Menuplan> findByDatumGreaterThanEqual(LocalDate datum);
+    
+    // Get all menu plans ordered by date (today first)
+    @Query("SELECT m FROM Menuplan m ORDER BY m.datum ASC")
+    List<Menuplan> findAllOrderByDatumAsc();
+    
+    // Get future menu plans ordered by date (today first)
+    @Query("SELECT m FROM Menuplan m WHERE m.datum >= :datum ORDER BY m.datum ASC")
+    List<Menuplan> findByDatumGreaterThanEqualOrderByDatumAsc(LocalDate datum);
 }

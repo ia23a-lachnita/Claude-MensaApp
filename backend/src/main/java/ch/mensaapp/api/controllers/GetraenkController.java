@@ -25,7 +25,7 @@ public class GetraenkController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Getraenk> getGetraenkById(@PathVariable Long id) {
+    public ResponseEntity<Getraenk> getGetraenkById(@PathVariable("id") Long id) {
         return ResponseEntity.ok(getraenkService.getGetraenkById(id));
     }
 
@@ -42,20 +42,20 @@ public class GetraenkController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
-    public ResponseEntity<Getraenk> aktualisiereGetraenk(@PathVariable Long id, @Valid @RequestBody GetraenkRequest getraenkRequest) {
+    public ResponseEntity<Getraenk> aktualisiereGetraenk(@PathVariable("id") Long id, @Valid @RequestBody GetraenkRequest getraenkRequest) {
         return ResponseEntity.ok(getraenkService.aktualisiereGetraenk(id, getraenkRequest));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
-    public ResponseEntity<MessageResponse> loescheGetraenk(@PathVariable Long id) {
+    public ResponseEntity<MessageResponse> loescheGetraenk(@PathVariable("id") Long id) {
         getraenkService.loescheGetraenk(id);
         return ResponseEntity.ok(new MessageResponse("Getränk erfolgreich gelöscht"));
     }
 
     @PutMapping("/{id}/vorrat")
     @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
-    public ResponseEntity<Getraenk> aktualisiereVorrat(@PathVariable Long id, @RequestParam Integer vorrat) {
+    public ResponseEntity<Getraenk> aktualisiereVorrat(@PathVariable("id") Long id, @RequestParam Integer vorrat) {
         return ResponseEntity.ok(getraenkService.aktualisiereVorrat(id, vorrat));
     }
 }

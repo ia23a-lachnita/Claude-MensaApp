@@ -6,10 +6,8 @@ import lombok.Data;
 
 @Data
 public class BestellPositionRequest {
-    @NotNull
-    private Long gerichtId;
+    private Long gerichtId; // Allow null, validate in service
 
-    @NotNull
     @Min(1)
-    private Integer anzahl;
+    private Integer anzahl; // Allow null, validate in service
 }

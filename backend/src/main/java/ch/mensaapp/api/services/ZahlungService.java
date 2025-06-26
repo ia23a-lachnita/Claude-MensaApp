@@ -2,6 +2,7 @@ package ch.mensaapp.api.services;
 
 import ch.mensaapp.api.models.Bestellung;
 import ch.mensaapp.api.models.Zahlung;
+import ch.mensaapp.api.models.ZahlungsMethode;
 import ch.mensaapp.api.models.ZahlungsStatus;
 import ch.mensaapp.api.payload.request.ZahlungRequest;
 import ch.mensaapp.api.payload.response.ZahlungResponse;
@@ -44,6 +45,9 @@ public class ZahlungService {
         if (zahlungRequest.getBetrag().compareTo(bestellung.getGesamtPreis()) != 0) {
             throw new RuntimeException("Der Zahlungsbetrag stimmt nicht mit dem Bestellungsbetrag überein");
         }
+
+        // Zahlungsmethoden-spezifische Validierung
+        validatePaymentMethod(zahlungRequest);
 
         // Zahlung speichern
         Zahlung zahlung = new Zahlung();
@@ -126,6 +130,35 @@ public class ZahlungService {
             }
         } catch (Exception e) {
             throw new RuntimeException("Fehler bei der Verarbeitung des Webhooks: " + e.getMessage());
+        }
+    }
+
+    private void validatePaymentMethod(ZahlungRequest zahlungRequest) {
+        ZahlungsMethode methode = zahlungRequest.getZahlungsMethode();
+        
+        switch (methode) {
+            case KREDITKARTE:
+            case DEBITKARTE:
+                if (zahlungRequest.getKartenNummer() == null || zahlungRequest.getKartenNummer().trim().isEmpty()) {
+                    throw new RuntimeException("Kartennummer ist erforderlich für " + methode.getDisplayName());
+                }
+                if (zahlungRequest.getKartenName() == null || zahlungRequest.getKartenName().trim().isEmpty()) {
+                    throw new RuntimeException("Karteninhaber ist erforderlich für " + methode.getDisplayName());
+                }
+                if (zahlungRequest.getKartenCVV() == null || zahlungRequest.getKartenCVV().trim().isEmpty()) {
+                    throw new RuntimeException("CVV ist erforderlich für " + methode.getDisplayName());
+                }
+                if (zahlungRequest.getKartenAblaufMonat() == null || zahlungRequest.getKartenAblaufJahr() == null) {
+                    throw new RuntimeException("Ablaufdatum ist erforderlich für " + methode.getDisplayName());
+                }
+                break;
+            case TWINT:
+                if (zahlungRequest.getTwintTelefonnummer() == null || zahlungRequest.getTwintTelefonnummer().trim().isEmpty()) {
+                    throw new RuntimeException("TWINT Telefonnummer ist erforderlich");
+                }
+                break;
+            default:
+                throw new RuntimeException("Nicht unterstützte Zahlungsmethode: " + methode);
         }
     }
 }

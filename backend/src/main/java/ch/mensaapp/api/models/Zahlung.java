@@ -27,8 +27,9 @@ public class Zahlung {
     @Column(nullable = false)
     private LocalDateTime zeitpunkt;
 
-    @Column(nullable = false, length = 100)
-    private String zahlungsMethode;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ZahlungsMethode zahlungsMethode;
 
     @Column(nullable = false, length = 100)
     private String transaktionsId;

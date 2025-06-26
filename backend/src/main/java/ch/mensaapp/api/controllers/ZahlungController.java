@@ -19,7 +19,7 @@ public class ZahlungController {
     private ZahlungService zahlungService;
 
     @PostMapping("/{bestellungId}")
-    public ResponseEntity<?> processZahlung(@PathVariable Long bestellungId, 
+    public ResponseEntity<?> processZahlung(@PathVariable("bestellungId") Long bestellungId, 
                                            @Valid @RequestBody ZahlungRequest zahlungRequest,
                                            @AuthenticationPrincipal UserDetailsImpl userDetails) {
         ZahlungResponse zahlungResponse = zahlungService.verarbeiteZahlung(bestellungId, zahlungRequest, userDetails.getId());
@@ -27,7 +27,7 @@ public class ZahlungController {
     }
 
     @GetMapping("/{bestellungId}")
-    public ResponseEntity<?> getZahlungStatus(@PathVariable Long bestellungId, 
+    public ResponseEntity<?> getZahlungStatus(@PathVariable("bestellungId") Long bestellungId, 
                                              @AuthenticationPrincipal UserDetailsImpl userDetails) {
         ZahlungResponse zahlungResponse = zahlungService.getZahlungByBestellungId(bestellungId, userDetails.getId());
         return ResponseEntity.ok(zahlungResponse);

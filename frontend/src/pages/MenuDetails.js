@@ -150,7 +150,7 @@ const MenuDetails = () => {
                           <Grid container spacing={3}>
                             {filteredDishes.map(gericht => (
                                 <Grid item xs={12} sm={6} md={4} key={gericht.id}>
-                                  <DishCard gericht={gericht} />
+                                  <DishCard gericht={gericht} menuDate={currentDate} />
                                 </Grid>
                             ))}
                           </Grid>

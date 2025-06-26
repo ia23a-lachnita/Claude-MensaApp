@@ -13,6 +13,7 @@ import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
 import MenuCard from '../components/menu/MenuCard';
 import DateSelector from '../components/menu/DateSelector';
+import { sortMenuPlansByDate } from '../utils/menuUtils';
 
 const Menu = () => {
   const dispatch = useDispatch();
@@ -33,9 +34,12 @@ const Menu = () => {
     if (error) return <ErrorMessage message={error} onRetry={() => dispatch(fetchWeeklyMenu())} />;
     
     if (weeklyMenus && weeklyMenus.length > 0) {
+      // Sortiere Menüpläne nach Datum (heute zuerst)
+      const sortedMenus = sortMenuPlansByDate(weeklyMenus);
+      
       return (
         <Grid container spacing={3}>
-          {weeklyMenus.map(menu => (
+          {sortedMenus.map(menu => (
             <Grid item xs={12} md={6} key={menu.id}>
               <MenuCard menuplan={menu} />
             </Grid>

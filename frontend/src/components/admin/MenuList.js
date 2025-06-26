@@ -25,6 +25,7 @@ import {
   Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import { formatDate } from '../../utils/dateUtils';
+import { sortMenuPlansByDate } from '../../utils/menuUtils';
 
 const MenuList = ({ menuPlans, onDelete }) => {
   const navigate = useNavigate();
@@ -85,7 +86,8 @@ const MenuList = ({ menuPlans, onDelete }) => {
           </TableHead>
           <TableBody>
             {menuPlans.length > 0 ? (
-              menuPlans.map((menu) => (
+              // Sortiere Menüpläne nach Datum (heute zuerst)
+              sortMenuPlansByDate(menuPlans).map((menu) => (
                 <TableRow key={menu.id}>
                   <TableCell>{menu.id}</TableCell>
                   <TableCell>{formatDate(menu.datum)}</TableCell>

@@ -35,7 +35,7 @@ const ExpandMore = styled((props) => {
   }),
 }));
 
-const DishCard = ({ gericht }) => {
+const DishCard = ({ gericht, menuDate }) => {
   const dispatch = useDispatch();
   const [expanded, setExpanded] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -48,7 +48,7 @@ const DishCard = ({ gericht }) => {
   };
 
   const handleAddToCart = () => {
-    dispatch(addToCart({ gericht, anzahl: quantity }));
+    dispatch(addToCart({ gericht, anzahl: quantity, menuDate }));
     toast.success(`${quantity}x ${gericht.name} zum Warenkorb hinzugefügt`);
   };
 

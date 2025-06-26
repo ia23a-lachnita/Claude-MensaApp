@@ -21,6 +21,7 @@ import { fetchTodayMenu, fetchWeeklyMenu } from '../store/menu/menuActions';
 import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
 import MenuCard from '../components/menu/MenuCard';
+import { getNextMenuPlans } from '../utils/menuUtils';
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -77,8 +78,8 @@ const Home = () => {
   
   const renderWeeklyPreview = () => {
     if (weeklyMenus && weeklyMenus.length > 0) {
-      // Nur die nächsten 3 Tage anzeigen
-      const nextDays = weeklyMenus.slice(0, 3);
+      // Hole die nächsten 3 Menüpläne ab heute (sortiert)
+      const nextDays = getNextMenuPlans(weeklyMenus, 3);
       
       return (
         <Box sx={{ mb: 4 }}>

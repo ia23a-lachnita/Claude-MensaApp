@@ -4,6 +4,7 @@ import ch.mensaapp.api.models.Bestellung;
 import ch.mensaapp.api.models.BestellStatus;
 import ch.mensaapp.api.payload.request.BestellungRequest;
 import ch.mensaapp.api.payload.response.BestellungResponse;
+import ch.mensaapp.api.payload.response.BestellungValidationResponse;
 import ch.mensaapp.api.payload.response.MessageResponse;
 import ch.mensaapp.api.security.UserDetailsImpl;
 import ch.mensaapp.api.services.BestellungService;
@@ -31,7 +32,7 @@ public class BestellungController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BestellungResponse> getBestellungById(@PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity<BestellungResponse> getBestellungById(@PathVariable("id") Long id, @AuthenticationPrincipal UserDetailsImpl userDetails) {
         BestellungResponse bestellung = bestellungService.getBestellungById(id);
         
         // Prüfen, ob die Bestellung dem aktuellen Benutzer gehört oder ob der Benutzer Admin/Staff ist
@@ -44,13 +45,41 @@ public class BestellungController {
     }
 
     @PostMapping
-    public ResponseEntity<BestellungResponse> createBestellung(@Valid @RequestBody BestellungRequest bestellungRequest, 
+    public ResponseEntity<BestellungResponse> createBestellung(@RequestBody BestellungRequest bestellungRequest, 
                                                          @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        // Debug logging to understand what frontend is sending
+        System.out.println("=== Bestellung Request Debug ===");
+        System.out.println("Abholdatum: " + bestellungRequest.getAbholDatum());
+        System.out.println("Abholzeit: " + bestellungRequest.getAbholZeit());
+        System.out.println("Positionen Anzahl: " + (bestellungRequest.getPositionen() != null ? bestellungRequest.getPositionen().size() : "null"));
+        if (bestellungRequest.getPositionen() != null) {
+            for (int i = 0; i < bestellungRequest.getPositionen().size(); i++) {
+                var pos = bestellungRequest.getPositionen().get(i);
+                System.out.println("Position " + i + ": gerichtId=" + 
+                    (pos != null ? pos.getGerichtId() : "null") + 
+                    ", anzahl=" + (pos != null ? pos.getAnzahl() : "null"));
+            }
+        }
+        System.out.println("=== End Debug ===");
+
         return ResponseEntity.ok(bestellungService.erstelleBestellung(bestellungRequest, userDetails.getId()));
     }
 
+    @PostMapping("/validate")
+    public ResponseEntity<BestellungValidationResponse> createBestellungWithValidation(@RequestBody BestellungRequest bestellungRequest, 
+                                                                                  @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        BestellungValidationResponse response = bestellungService.erstelleBestellungMitValidation(bestellungRequest, userDetails.getId());
+        
+        // Return appropriate HTTP status based on validation result
+        if (response.isErfolgreich()) {
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
     @PutMapping("/{id}/stornieren")
-    public ResponseEntity<BestellungResponse> storniereBestellung(@PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity<BestellungResponse> storniereBestellung(@PathVariable("id") Long id, @AuthenticationPrincipal UserDetailsImpl userDetails) {
         return ResponseEntity.ok(bestellungService.storniereBestellung(id, userDetails.getId()));
     }
 
@@ -69,7 +98,7 @@ public class BestellungController {
 
     @PutMapping("/{id}/status")
     @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
-    public ResponseEntity<BestellungResponse> updateBestellungStatus(@PathVariable Long id, @RequestParam BestellStatus status) {
+    public ResponseEntity<BestellungResponse> updateBestellungStatus(@PathVariable("id") Long id, @RequestParam BestellStatus status) {
         return ResponseEntity.ok(bestellungService.updateBestellungStatus(id, status));
     }
 }

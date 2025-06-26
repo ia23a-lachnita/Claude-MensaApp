@@ -51,13 +51,13 @@ public class UserController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserResponse> getUserById(@PathVariable("id") Long id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
     @PutMapping("/{id}/roles")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserResponse> updateUserRoles(@PathVariable Long id, @RequestBody List<String> roles) {
+    public ResponseEntity<UserResponse> updateUserRoles(@PathVariable("id") Long id, @RequestBody List<String> roles) {
         return ResponseEntity.ok(userService.updateUserRoles(id, roles));
     }
 }

@@ -14,24 +14,40 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import deLocale from 'date-fns/locale/de';
 import { addDays, format, isToday, parseISO, set } from 'date-fns';
-import { setAbholDatum, setAbholZeit, setBemerkungen } from '../../store/cart/cartSlice';
+import { 
+  setAbholDatum, 
+  setAbholZeit, 
+  setBemerkungen,
+  selectOriginalMenuDate,
+  selectValidationErrors
+} from '../../store/cart/cartSlice';
+import { useCartValidation } from '../../hooks/useCartValidation';
+import CartValidationDisplay from './CartValidationDisplay';
 
 const PickupSelector = () => {
   const dispatch = useDispatch();
   const selectedDate = useSelector(state => state.cart.abholDatum);
   const selectedTime = useSelector(state => state.cart.abholZeit);
   const bemerkungen = useSelector(state => state.cart.bemerkungen);
+  const originalMenuDate = useSelector(selectOriginalMenuDate);
+  const validationErrors = useSelector(selectValidationErrors);
   
   const [minTime, setMinTime] = useState(null);
+  const { validateCart, isValid, hasConflictingDates } = useCartValidation();
   
-  // Set default date to today if not selected
+  // Set default date to original menu date or today if not selected
   useEffect(() => {
     if (!selectedDate) {
-      handleDateChange(new Date());
+      if (originalMenuDate) {
+        // Use the original menu date from which products were added
+        handleDateChange(parseISO(originalMenuDate));
+      } else {
+        handleDateChange(new Date());
+      }
     } else {
       updateMinTime(selectedDate);
     }
-  }, [selectedDate]);
+  }, [selectedDate, originalMenuDate]);
   
   const handleDateChange = (date) => {
     const formattedDate = format(date, 'yyyy-MM-dd');
@@ -45,6 +61,13 @@ const PickupSelector = () => {
         dispatch(setAbholZeit(null));
       }
     }
+    
+    // Trigger validation after date change
+    setTimeout(() => validateCart(), 100);
+  };
+
+  const handleDateSuggestionClick = (suggestedDate) => {
+    handleDateChange(parseISO(suggestedDate));
   };
   
   const handleTimeChange = (time) => {
@@ -142,6 +165,12 @@ const PickupSelector = () => {
           </Grid>
         </Grid>
       </LocalizationProvider>
+
+      {/* Cart Validation Display */}
+      <CartValidationDisplay 
+        validationErrors={validationErrors}
+        onDateSuggestionClick={handleDateSuggestionClick}
+      />
     </Paper>
   );
 };
