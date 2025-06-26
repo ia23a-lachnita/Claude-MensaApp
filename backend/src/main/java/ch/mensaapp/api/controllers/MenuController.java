@@ -28,13 +28,13 @@ public class MenuController {
 
     @GetMapping("/datum/{datum}")
     public ResponseEntity<MenuplanResponse> getMenuFuerDatum(
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate datum) {
+            @PathVariable("datum") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate datum) {
         return ResponseEntity.ok(menuService.getMenuplanFuerDatum(datum));
     }
 
     @GetMapping("/woche")
     public ResponseEntity<List<MenuplanResponse>> getMenuFuerWoche(
-            @RequestParam(required = false) String startDatum) {
+            @RequestParam(value = "startDatum", required = false) String startDatum) {
         LocalDate date;
 
         if (startDatum == null) {

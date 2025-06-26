@@ -63,7 +63,7 @@ public class BestellungController {
     @GetMapping("/datum/{datum}")
     @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
     public ResponseEntity<List<BestellungResponse>> getBestellungenByDatum(
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate datum) {
+            @PathVariable("datum") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate datum) {
         return ResponseEntity.ok(bestellungService.getBestellungenByAbholDatum(datum));
     }
 

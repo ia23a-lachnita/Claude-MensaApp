@@ -34,7 +34,7 @@ public class MenuplanController {
 
     @GetMapping("/datum/{datum}")
     public ResponseEntity<MenuplanResponse> getMenuplanByDatum(
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate datum) {
+            @PathVariable("datum") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate datum) {
         return ResponseEntity.ok(menuplanService.getMenuplanByDatum(datum));
     }
 
