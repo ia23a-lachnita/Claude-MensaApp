@@ -20,13 +20,13 @@ import {
 import { toast } from 'react-toastify';
 import { addDrinkToCart } from '../../store/cart/cartSlice';
 
-const DrinkCard = ({ getraenk }) => {
+const DrinkCard = ({ getraenk, menuDate }) => {
     const dispatch = useDispatch();
     const [quantity, setQuantity] = useState(1);
     const [btnHover, setBtnHover] = useState(false);
 
     const handleAddToCart = () => {
-        dispatch(addDrinkToCart({ getraenk, anzahl: quantity }));
+        dispatch(addDrinkToCart({ getraenk, anzahl: quantity, menuDate }));
         toast.success(`${quantity}x ${getraenk.name} zum Warenkorb hinzugefügt`);
     };
 

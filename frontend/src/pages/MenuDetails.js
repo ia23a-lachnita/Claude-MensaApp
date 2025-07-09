@@ -178,7 +178,7 @@ const MenuDetails = () => {
                           <Grid container spacing={3}>
                             {filteredDrinks.map(getraenk => (
                                 <Grid item xs={12} sm={6} md={4} key={getraenk.id}>
-                                  <DrinkCard getraenk={getraenk} />
+                                  <DrinkCard getraenk={getraenk} menuDate={currentDate} />
                                 </Grid>
                             ))}
                           </Grid>

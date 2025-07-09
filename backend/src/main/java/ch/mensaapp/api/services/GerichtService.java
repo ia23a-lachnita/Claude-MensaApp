@@ -48,13 +48,8 @@ public class GerichtService {
         getGerichtById(gerichtId);
         
         // Find all menuplans that contain this dish and are not in the past
-        return menuplanRepository.findAll().stream()
-                .filter(menuplan -> !menuplan.getDatum().isBefore(LocalDate.now()))
-                .filter(menuplan -> menuplan.getGerichte().stream()
-                        .anyMatch(gericht -> gericht.getId().equals(gerichtId)))
-                .map(Menuplan::getDatum)
-                .sorted()
-                .collect(Collectors.toList());
+        // Optimized query instead of loading all menuplans
+        return menuplanRepository.findMenuplanDatesForGericht(gerichtId, LocalDate.now());
     }
 
     public GerichtMitDatenResponse getGerichtMitAlternativen(Long gerichtId, LocalDate urspruenglichesDatum) {

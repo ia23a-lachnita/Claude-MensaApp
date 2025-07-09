@@ -18,7 +18,7 @@ export const useCartValidation = () => {
 
   const validateCart = useCallback(async () => {
     // Don't validate if cart is empty
-    if (!cartItems || cartItems.length === 0) {
+    if ((!cartItems || cartItems.length === 0) && (!cartState.drinks || cartState.drinks.length === 0)) {
       dispatch(clearValidationErrors());
       return { valid: true };
     }
@@ -49,7 +49,7 @@ export const useCartValidation = () => {
 
   // Auto-validate when pickup date changes
   useEffect(() => {
-    if (abholDatum && cartItems.length > 0) {
+    if (abholDatum && (cartItems.length > 0 || (cartState.drinks && cartState.drinks.length > 0))) {
       validateCart();
     }
   }, [abholDatum, validateCart]);

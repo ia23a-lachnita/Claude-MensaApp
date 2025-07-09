@@ -18,6 +18,27 @@ export const cartSlice = createSlice({
       const { gericht, anzahl, menuDate } = action.payload;
       const existingItemIndex = state.items.findIndex(item => item.gericht.id === gericht.id);
 
+      // Check for date conflicts: if cart has items from different dates, show warning
+      if (state.items.length > 0 && state.originalMenuDate && menuDate && state.originalMenuDate !== menuDate) {
+        // Set validation error for mixing products from different dates
+        state.validationErrors = {
+          valid: false,
+          message: "Produkte können nur von einem Menüplan-Datum bestellt werden. Bitte leeren Sie den Warenkorb oder wählen Sie Produkte vom gleichen Datum.",
+          hasConflictingDates: true,
+          dateConflicts: [
+            {
+              datum: state.originalMenuDate,
+              gerichtNamen: state.items.map(item => item.gericht.name)
+            },
+            {
+              datum: menuDate,
+              gerichtNamen: [gericht.name]
+            }
+          ]
+        };
+        return; // Don't add the item
+      }
+
       // Set original menu date if this is the first item and no date is set
       if (state.items.length === 0 && state.drinks.length === 0 && menuDate && !state.originalMenuDate) {
         state.originalMenuDate = menuDate;
@@ -32,11 +53,45 @@ export const cartSlice = createSlice({
       } else {
         state.items.push({ gericht, anzahl, originalMenuDate: menuDate });
       }
+      
+      // Clear validation errors when successfully adding item
+      state.validationErrors = [];
     },
 
     // NEW: Add drinks to cart
     addDrinkToCart: (state, action) => {
-      const { getraenk, anzahl } = action.payload;
+      const { getraenk, anzahl, menuDate } = action.payload;
+      
+      // Check for date conflicts: if cart has items from different dates, show warning
+      if (state.items.length > 0 && state.originalMenuDate && menuDate && state.originalMenuDate !== menuDate) {
+        // Set validation error for mixing products from different dates
+        state.validationErrors = {
+          valid: false,
+          message: "Produkte können nur von einem Menüplan-Datum bestellt werden. Bitte leeren Sie den Warenkorb oder wählen Sie Produkte vom gleichen Datum.",
+          hasConflictingDates: true,
+          dateConflicts: [
+            {
+              datum: state.originalMenuDate,
+              gerichtNamen: state.items.map(item => item.gericht.name)
+            },
+            {
+              datum: menuDate,
+              gerichtNamen: [getraenk.name]
+            }
+          ]
+        };
+        return; // Don't add the item
+      }
+      
+      // Set original menu date if this is the first item and no date is set
+      if (state.items.length === 0 && state.drinks.length === 0 && menuDate && !state.originalMenuDate) {
+        state.originalMenuDate = menuDate;
+        // Auto-set pickup date to the original menu date
+        if (!state.abholDatum) {
+          state.abholDatum = menuDate;
+        }
+      }
+      
       // Ensure drinks array exists
       if (!state.drinks) {
         state.drinks = [];
@@ -46,8 +101,11 @@ export const cartSlice = createSlice({
       if (existingDrinkIndex !== -1) {
         state.drinks[existingDrinkIndex].anzahl += anzahl;
       } else {
-        state.drinks.push({ getraenk, anzahl });
+        state.drinks.push({ getraenk, anzahl, originalMenuDate: menuDate });
       }
+      
+      // Clear validation errors when successfully adding item
+      state.validationErrors = [];
     },
 
     removeFromCart: (state, action) => {

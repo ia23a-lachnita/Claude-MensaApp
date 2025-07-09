@@ -20,9 +20,16 @@ export const convertCartToBasketRequest = (cartState) => {
     anzahl: item.anzahl,
     urspruenglichesDatum: item.originalMenuDate
   }));
+  
+  const drinks = (cartState.drinks || []).map(item => ({
+    getraenkId: item.getraenk.id,
+    anzahl: item.anzahl,
+    urspruenglichesDatum: item.originalMenuDate
+  }));
 
   return {
     items,
+    drinks,
     gewuenschtesAbholDatum: cartState.abholDatum
   };
 };

@@ -1,10 +1,12 @@
 package ch.mensaapp.api.services;
 
 import ch.mensaapp.api.models.Gericht;
+import ch.mensaapp.api.models.Getraenk;
 import ch.mensaapp.api.models.Menuplan;
 import ch.mensaapp.api.payload.request.BasketValidationRequest;
 import ch.mensaapp.api.payload.response.BasketValidationResponse;
 import ch.mensaapp.api.repositories.GerichtRepository;
+import ch.mensaapp.api.repositories.GetraenkRepository;
 import ch.mensaapp.api.repositories.MenuplanRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,10 +22,16 @@ public class BasketService {
     private GerichtRepository gerichtRepository;
 
     @Autowired
+    private GetraenkRepository getraenkRepository;
+
+    @Autowired
     private MenuplanRepository menuplanRepository;
 
     @Autowired
     private GerichtService gerichtService;
+
+    @Autowired
+    private GetraenkService getraenkService;
 
     public BasketValidationResponse validateBasket(BasketValidationRequest request) {
         BasketValidationResponse response = new BasketValidationResponse();
@@ -33,40 +41,79 @@ public class BasketService {
         Set<LocalDate> allMoeglicheDaten = new HashSet<>();
         boolean allItemsValid = true;
 
-        for (BasketValidationRequest.BasketItemRequest item : request.getItems()) {
-            if (item.getGerichtId() == null) continue; // Skip null items
+        // Validate dishes
+        if (request.getItems() != null) {
+            for (BasketValidationRequest.BasketItemRequest item : request.getItems()) {
+                if (item.getGerichtId() == null) continue; // Skip null items
 
-            BasketValidationResponse.BasketItemValidation validation = new BasketValidationResponse.BasketItemValidation();
+                BasketValidationResponse.BasketItemValidation validation = new BasketValidationResponse.BasketItemValidation();
 
-            try {
-                Gericht gericht = gerichtRepository.findById(item.getGerichtId())
-                        .orElseThrow(() -> new RuntimeException("Gericht nicht gefunden"));
+                try {
+                    Gericht gericht = gerichtRepository.findById(item.getGerichtId())
+                            .orElseThrow(() -> new RuntimeException("Gericht nicht gefunden"));
 
-                validation.setGerichtId(item.getGerichtId());
-                validation.setGerichtName(gericht.getName());
-                validation.setUrspruenglichesDatum(item.getUrspruenglichesDatum());
+                    validation.setGerichtId(item.getGerichtId());
+                    validation.setGerichtName(gericht.getName());
+                    validation.setUrspruenglichesDatum(item.getUrspruenglichesDatum());
 
-                List<LocalDate> verfuegbareDaten = gerichtService.getVerfuegbareDatenFuerGericht(item.getGerichtId());
-                validation.setAlternativeDaten(verfuegbareDaten);
-                allMoeglicheDaten.addAll(verfuegbareDaten);
+                    List<LocalDate> verfuegbareDaten = gerichtService.getVerfuegbareDatenFuerGericht(item.getGerichtId());
+                    validation.setAlternativeDaten(verfuegbareDaten);
+                    allMoeglicheDaten.addAll(verfuegbareDaten);
 
-                // Check if available on requested date
-                if (request.getGewuenschtesAbholDatum() != null) {
-                    boolean verfuegbar = verfuegbareDaten.contains(request.getGewuenschtesAbholDatum());
+                    // Check if available on requested date
+                    if (request.getGewuenschtesAbholDatum() != null) {
+                        boolean verfuegbar = verfuegbareDaten.contains(request.getGewuenschtesAbholDatum());
+                        validation.setVerfuegbarAmGewuenschtenDatum(verfuegbar);
+                        if (!verfuegbar) {
+                            allItemsValid = false;
+                        }
+                    } else {
+                        validation.setVerfuegbarAmGewuenschtenDatum(false);
+                    }
+
+                } catch (Exception e) {
+                    validation.setVerfuegbarAmGewuenschtenDatum(false);
+                    allItemsValid = false;
+                }
+
+                itemValidations.add(validation);
+            }
+        }
+
+        // Validate drinks - drinks are generally always available, but we check if they exist and are in stock
+        if (request.getDrinks() != null) {
+            for (BasketValidationRequest.BasketDrinkRequest drink : request.getDrinks()) {
+                if (drink.getGetraenkId() == null) continue; // Skip null items
+
+                BasketValidationResponse.BasketItemValidation validation = new BasketValidationResponse.BasketItemValidation();
+
+                try {
+                    Getraenk getraenk = getraenkRepository.findById(drink.getGetraenkId())
+                            .orElseThrow(() -> new RuntimeException("Getränk nicht gefunden"));
+
+                    validation.setGerichtId(drink.getGetraenkId()); // Reuse gerichtId field for drinks
+                    validation.setGerichtName(getraenk.getName());
+                    validation.setUrspruenglichesDatum(drink.getUrspruenglichesDatum());
+
+                    // Drinks are available on all days (no date restrictions)
+                    List<LocalDate> verfuegbareDaten = List.of(LocalDate.now(), LocalDate.now().plusDays(1), LocalDate.now().plusDays(2), LocalDate.now().plusDays(3), LocalDate.now().plusDays(4), LocalDate.now().plusDays(5), LocalDate.now().plusDays(6));
+                    validation.setAlternativeDaten(verfuegbareDaten);
+                    allMoeglicheDaten.addAll(verfuegbareDaten);
+
+                    // Check if drink is available (in stock and verfuegbar)
+                    boolean verfuegbar = getraenk.isVerfuegbar() && getraenk.getVorrat() > 0;
                     validation.setVerfuegbarAmGewuenschtenDatum(verfuegbar);
                     if (!verfuegbar) {
                         allItemsValid = false;
                     }
-                } else {
+
+                } catch (Exception e) {
                     validation.setVerfuegbarAmGewuenschtenDatum(false);
+                    allItemsValid = false;
                 }
 
-            } catch (Exception e) {
-                validation.setVerfuegbarAmGewuenschtenDatum(false);
-                allItemsValid = false;
+                itemValidations.add(validation);
             }
-
-            itemValidations.add(validation);
         }
 
         response.setItemValidations(itemValidations);
