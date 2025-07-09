@@ -49,7 +49,7 @@ const MainLayout = () => {
 
     // Check if user has admin or staff role
     const isAdminOrStaff = user && user.roles &&
-        (user.roles.includes('ROLE_ADMIN') || user.roles.includes('ROLE_STAFF'));
+        (user.roles.includes('ROLE_MENSA_ADMIN') || user.roles.includes('ROLE_STAFF'));
 
     const handleProfileMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);

@@ -98,7 +98,7 @@ const App = () => {
 
       {/* Admin Routes */}
       <Route path="/admin" element={
-        <ProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_STAFF']}>
+        <ProtectedRoute allowedRoles={['ROLE_MENSA_ADMIN', 'ROLE_STAFF']}>
           <AdminLayout />
         </ProtectedRoute>
       }>
@@ -114,7 +114,7 @@ const App = () => {
         <Route path="drinks/new" element={<AdminDrinkEdit />} />
         <Route path="drinks/:id" element={<AdminDrinkEdit />} />
         <Route path="users" element={
-          <ProtectedRoute allowedRoles={['ROLE_ADMIN']}>
+          <ProtectedRoute allowedRoles={['ROLE_MENSA_ADMIN']}>
             <AdminUsers />
           </ProtectedRoute>
         } />

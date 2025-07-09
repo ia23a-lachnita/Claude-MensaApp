@@ -91,7 +91,7 @@ public class DataLoader implements CommandLineRunner {
             List<Role> roles = Arrays.asList(
                     new Role(ERole.ROLE_USER),
                     new Role(ERole.ROLE_STAFF),
-                    new Role(ERole.ROLE_ADMIN)
+                    new Role(ERole.ROLE_MENSA_ADMIN)
             );
             roleRepository.saveAll(roles);
             System.out.println("Created roles: " + roles.size());
@@ -114,7 +114,7 @@ public class DataLoader implements CommandLineRunner {
                     .orElseThrow(() -> new RuntimeException("Role USER not found - make sure roles are created first"));
             Role staffRole = roleRepository.findByName(ERole.ROLE_STAFF)
                     .orElseThrow(() -> new RuntimeException("Role STAFF not found - make sure roles are created first"));
-            Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
+            Role adminRole = roleRepository.findByName(ERole.ROLE_MENSA_ADMIN)
                     .orElseThrow(() -> new RuntimeException("Role ADMIN not found - make sure roles are created first"));
 
             // Create admin user

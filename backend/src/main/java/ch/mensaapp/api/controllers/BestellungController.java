@@ -37,7 +37,7 @@ public class BestellungController {
         
         // Prüfen, ob die Bestellung dem aktuellen Benutzer gehört oder ob der Benutzer Admin/Staff ist
         if (bestellung.getUserId().equals(userDetails.getId()) || 
-            userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_STAFF"))) {
+            userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_MENSA_MENSA_ADMIN") || a.getAuthority().equals("ROLE_STAFF"))) {
             return ResponseEntity.ok(bestellung);
         } else {
             return ResponseEntity.status(403).build();
@@ -84,20 +84,20 @@ public class BestellungController {
     }
 
     @GetMapping("/alle")
-    @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('STAFF') or hasRole('MENSA_ADMIN')")
     public ResponseEntity<List<BestellungResponse>> getAlleBestellungen() {
         return ResponseEntity.ok(bestellungService.getAlleBestellungen());
     }
 
     @GetMapping("/datum/{datum}")
-    @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('STAFF') or hasRole('MENSA_ADMIN')")
     public ResponseEntity<List<BestellungResponse>> getBestellungenByDatum(
             @PathVariable("datum") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate datum) {
         return ResponseEntity.ok(bestellungService.getBestellungenByAbholDatum(datum));
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('STAFF') or hasRole('MENSA_ADMIN')")
     public ResponseEntity<BestellungResponse> updateBestellungStatus(@PathVariable("id") Long id, @RequestParam BestellStatus status) {
         return ResponseEntity.ok(bestellungService.updateBestellungStatus(id, status));
     }

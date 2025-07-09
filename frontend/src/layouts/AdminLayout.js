@@ -38,7 +38,7 @@ const AdminLayout = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const user = useSelector(state => state.auth.user);
-    const isAdmin = user && user.roles && user.roles.includes('ROLE_ADMIN');
+    const isAdmin = user && user.roles && user.roles.includes('ROLE_MENSA_ADMIN');
 
     const [mobileOpen, setMobileOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);

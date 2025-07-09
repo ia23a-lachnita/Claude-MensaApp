@@ -73,7 +73,7 @@ const UserList = ({ users, onUpdateRoles }) => {
     let label = role.replace('ROLE_', '');
     
     switch (role) {
-      case 'ROLE_ADMIN':
+      case 'ROLE_MENSA_ADMIN':
         color = 'error';
         break;
       case 'ROLE_STAFF':
@@ -206,7 +206,7 @@ const UserList = ({ users, onUpdateRoles }) => {
                 >
                   <MenuItem value="USER">Benutzer</MenuItem>
                   <MenuItem value="STAFF">Mitarbeiter</MenuItem>
-                  <MenuItem value="ADMIN">Administrator</MenuItem>
+                  <MenuItem value="MENSA_ADMIN">Administrator</MenuItem>
                 </Select>
               </FormControl>
             </Box>

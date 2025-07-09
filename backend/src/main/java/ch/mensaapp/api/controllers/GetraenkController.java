@@ -35,26 +35,26 @@ public class GetraenkController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('STAFF') or hasRole('MENSA_ADMIN')")
     public ResponseEntity<Getraenk> erstelleGetraenk(@Valid @RequestBody GetraenkRequest getraenkRequest) {
         return ResponseEntity.ok(getraenkService.erstelleGetraenk(getraenkRequest));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('STAFF') or hasRole('MENSA_ADMIN')")
     public ResponseEntity<Getraenk> aktualisiereGetraenk(@PathVariable("id") Long id, @Valid @RequestBody GetraenkRequest getraenkRequest) {
         return ResponseEntity.ok(getraenkService.aktualisiereGetraenk(id, getraenkRequest));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('STAFF') or hasRole('MENSA_ADMIN')")
     public ResponseEntity<MessageResponse> loescheGetraenk(@PathVariable("id") Long id) {
         getraenkService.loescheGetraenk(id);
         return ResponseEntity.ok(new MessageResponse("Getränk erfolgreich gelöscht"));
     }
 
     @PutMapping("/{id}/vorrat")
-    @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('STAFF') or hasRole('MENSA_ADMIN')")
     public ResponseEntity<Getraenk> aktualisiereVorrat(@PathVariable("id") Long id, @RequestParam Integer vorrat) {
         return ResponseEntity.ok(getraenkService.aktualisiereVorrat(id, vorrat));
     }
