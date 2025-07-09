@@ -15,8 +15,10 @@ import {
   FormHelperText,
   Divider,
   CircularProgress,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
-import { CreditCard, AccountBalance, Receipt } from '@mui/icons-material';
+import { CreditCard, AccountBalance, Receipt, DeveloperMode } from '@mui/icons-material';
 
 const PaymentSchema = Yup.object().shape({
   zahlungsMethode: Yup.string().required('Bitte wählen Sie eine Zahlungsmethode'),
@@ -48,6 +50,10 @@ const PaymentSchema = Yup.object().shape({
       .required('Jahr ist erforderlich')
       .matches(/^\d{2}$/, 'Jahr muss 2 Ziffern haben'),
   }),
+  mockPaymentSuccess: Yup.boolean().when('zahlungsMethode', {
+    is: 'MOCK_PROVIDER',
+    then: () => Yup.boolean(),
+  }),
 });
 
 const PaymentForm = ({ order, onSubmit, loading }) => {
@@ -60,6 +66,7 @@ const PaymentForm = ({ order, onSubmit, loading }) => {
     kartenCVV: '',
     kartenAblaufMonat: '',
     kartenAblaufJahr: '',
+    mockPaymentSuccess: true,
   };
   
   const handleSubmit = (values) => {
@@ -117,6 +124,9 @@ const PaymentForm = ({ order, onSubmit, loading }) => {
                     </MenuItem>
                     <MenuItem value="RECHNUNG" sx={{ display: 'flex', alignItems: 'center' }}>
                       <Receipt sx={{ mr: 1 }} /> Rechnung
+                    </MenuItem>
+                    <MenuItem value="MOCK_PROVIDER" sx={{ display: 'flex', alignItems: 'center' }}>
+                      <DeveloperMode sx={{ mr: 1 }} /> Mock Provider (Test)
                     </MenuItem>
                   </Field>
                   {touched.zahlungsMethode && errors.zahlungsMethode && (
@@ -229,6 +239,31 @@ const PaymentForm = ({ order, onSubmit, loading }) => {
                 <Grid item xs={12}>
                   <Typography variant="body2">
                     Sie erhalten eine Rechnung per E-Mail. Bitte bezahlen Sie diese innerhalb von 10 Tagen.
+                  </Typography>
+                </Grid>
+              )}
+              
+              {paymentMethod === 'MOCK_PROVIDER' && (
+                <Grid item xs={12}>
+                  <Typography variant="body2" gutterBottom>
+                    Mock Provider für Testzwecke. Sie können das Zahlungsergebnis steuern:
+                  </Typography>
+                  <FormControlLabel
+                    control={
+                      <Field
+                        as={Switch}
+                        name="mockPaymentSuccess"
+                        color="primary"
+                        checked={values.mockPaymentSuccess}
+                        onChange={(e) => setFieldValue('mockPaymentSuccess', e.target.checked)}
+                      />
+                    }
+                    label="Zahlung erfolgreich simulieren"
+                  />
+                  <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                    {values.mockPaymentSuccess 
+                      ? "Die Zahlung wird als erfolgreich simuliert" 
+                      : "Die Zahlung wird als fehlgeschlagen simuliert"}
                   </Typography>
                 </Grid>
               )}

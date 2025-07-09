@@ -3,7 +3,7 @@ package ch.mensaapp.api.models;
 public enum ZahlungsMethode {
     KREDITKARTE("Kreditkarte"),
     DEBITKARTE("Debitkarte"),
-    TWINT("TWINT");
+    MOCK_PROVIDER("Mock Provider");
 
     private final String displayName;
 

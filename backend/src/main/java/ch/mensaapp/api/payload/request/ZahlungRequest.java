@@ -21,6 +21,6 @@ public class ZahlungRequest {
     private String kartenAblaufMonat;
     private String kartenAblaufJahr;
     
-    // TWINT Felder
-    private String twintTelefonnummer;
+    // Mock Provider Felder
+    private Boolean mockPaymentSuccess; // For testing payment success/failure
 }

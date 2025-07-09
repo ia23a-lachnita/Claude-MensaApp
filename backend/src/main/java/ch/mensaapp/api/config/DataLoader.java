@@ -512,7 +512,7 @@ public class DataLoader implements CommandLineRunner {
                     zahlung.setBestellung(bestellung); // Now bestellung has an ID
                     zahlung.setBetrag(bestellung.getGesamtPreis());
                     zahlung.setZeitpunkt(LocalDateTime.now().minusHours(new Random().nextInt(24)));
-                    zahlung.setZahlungsMethode(new Random().nextBoolean() ? ZahlungsMethode.KREDITKARTE : ZahlungsMethode.TWINT);
+                    zahlung.setZahlungsMethode(new Random().nextBoolean() ? ZahlungsMethode.KREDITKARTE : ZahlungsMethode.MOCK_PROVIDER);
                     zahlung.setTransaktionsId(bestellung.getZahlungsReferenz());
                     zahlung.setErfolgreich(true);
 

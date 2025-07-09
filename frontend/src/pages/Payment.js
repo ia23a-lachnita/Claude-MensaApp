@@ -54,9 +54,18 @@ const Payment = () => {
   const handlePaymentSubmit = async (paymentData) => {
     setProcessingPayment(true);
     try {
-      await zahlungService.processZahlung(orderId, paymentData);
-      toast.success('Zahlung erfolgreich');
-      navigate(`/order-confirmation/${orderId}`);
+      const response = await zahlungService.processZahlung(orderId, paymentData);
+      
+      // Check if payment was successful
+      if (response.data.erfolgreich) {
+        toast.success('Zahlung erfolgreich! Sie erhalten eine Bestätigung per E-Mail.');
+        navigate(`/order-confirmation/${orderId}`);
+      } else {
+        // Payment failed
+        const errorMessage = response.data.fehlerMeldung || 'Zahlung fehlgeschlagen';
+        toast.error(`Zahlung fehlgeschlagen: ${errorMessage}`);
+        setProcessingPayment(false);
+      }
     } catch (error) {
       const message = error.response?.data?.message || 'Zahlung konnte nicht verarbeitet werden';
       toast.error(message);

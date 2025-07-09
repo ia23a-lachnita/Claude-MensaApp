@@ -56,22 +56,33 @@ public class ZahlungService {
         zahlung.setZeitpunkt(LocalDateTime.now());
         zahlung.setZahlungsMethode(zahlungRequest.getZahlungsMethode());
         
-        // In einer realen Anwendung würde hier die Zahlungsabwicklung mit einem echten Zahlungsanbieter erfolgen
-        // Hier simulieren wir einen erfolgreichen Zahlungsvorgang
+        // Zahlungsabwicklung je nach Zahlungsmethode
         String transaktionsId = UUID.randomUUID().toString();
         zahlung.setTransaktionsId(transaktionsId);
-        zahlung.setErfolgreich(true);
         
-        // Bestellung aktualisieren
-        bestellung.setZahlungsStatus(ZahlungsStatus.BEZAHLT);
-        bestellung.setZahlungsReferenz(transaktionsId);
+        boolean paymentSuccess = processPaymentByMethod(zahlungRequest);
+        zahlung.setErfolgreich(paymentSuccess);
+        
+        if (!paymentSuccess) {
+            zahlung.setFehlerMeldung("Zahlung fehlgeschlagen");
+        }
+        
+        // Bestellung aktualisieren nur bei erfolgreicher Zahlung
+        if (paymentSuccess) {
+            bestellung.setZahlungsStatus(ZahlungsStatus.BEZAHLT);
+            bestellung.setZahlungsReferenz(transaktionsId);
+        } else {
+            bestellung.setZahlungsStatus(ZahlungsStatus.AUSSTEHEND);
+        }
         bestellungRepository.save(bestellung);
         
         Zahlung gespeicherteZahlung = zahlungRepository.save(zahlung);
         
-        // E-Mail mit Zahlungsbestätigung senden
-        emailService.sendeZahlungsBestaetigung(bestellung);
-        System.out.println("Zahlungsbestätigung gesendet für Bestellung ID: " + bestellungId);
+        // E-Mail mit Zahlungsbestätigung senden nur bei erfolgreicher Zahlung
+        if (paymentSuccess) {
+            emailService.sendeZahlungsBestaetigung(bestellung);
+            System.out.println("Zahlungsbestätigung gesendet für Bestellung ID: " + bestellungId);
+        }
         
         return ZahlungResponse.fromEntity(gespeicherteZahlung);
     }
@@ -152,13 +163,60 @@ public class ZahlungService {
                     throw new RuntimeException("Ablaufdatum ist erforderlich für " + methode.getDisplayName());
                 }
                 break;
-            case TWINT:
-                if (zahlungRequest.getTwintTelefonnummer() == null || zahlungRequest.getTwintTelefonnummer().trim().isEmpty()) {
-                    throw new RuntimeException("TWINT Telefonnummer ist erforderlich");
-                }
+            case MOCK_PROVIDER:
+                // Mock provider needs no additional validation
                 break;
             default:
                 throw new RuntimeException("Nicht unterstützte Zahlungsmethode: " + methode);
         }
+    }
+    
+    private boolean processPaymentByMethod(ZahlungRequest zahlungRequest) {
+        ZahlungsMethode methode = zahlungRequest.getZahlungsMethode();
+        
+        switch (methode) {
+            case KREDITKARTE:
+            case DEBITKARTE:
+                // Simuliere Kreditkarten-/Debitkarten-Zahlung
+                // In einer realen Anwendung würde hier die Zahlungsabwicklung mit einem echten Zahlungsanbieter erfolgen
+                return simulateCardPayment(zahlungRequest);
+                
+            case MOCK_PROVIDER:
+                // Mock provider für Testzwecke
+                return simulateMockPayment(zahlungRequest);
+                
+            default:
+                throw new RuntimeException("Nicht unterstützte Zahlungsmethode: " + methode);
+        }
+    }
+    
+    private boolean simulateCardPayment(ZahlungRequest zahlungRequest) {
+        // Simuliere eine Kreditkartenzahlung
+        // In der Realität würde hier eine Verbindung zu einem Zahlungsanbieter hergestellt
+        
+        // Simuliere einen Fehlschlag bei bestimmten Kartennummern (für Testzwecke)
+        String kartenNummer = zahlungRequest.getKartenNummer();
+        if (kartenNummer != null && kartenNummer.startsWith("4000")) {
+            // Simuliere einen Zahlungsfehlschlag
+            return false;
+        }
+        
+        // Ansonsten simuliere eine erfolgreiche Zahlung
+        return true;
+    }
+    
+    private boolean simulateMockPayment(ZahlungRequest zahlungRequest) {
+        // Mock Provider: Verwende den expliziten Success-Parameter oder simuliere zufällig
+        if (zahlungRequest.getMockPaymentSuccess() != null) {
+            return zahlungRequest.getMockPaymentSuccess();
+        }
+        
+        // Standardmäßig erfolgreich, außer bei bestimmten Beträgen (für Testzwecke)
+        // z.B. Beträge mit .13 am Ende schlagen fehl
+        if (zahlungRequest.getBetrag().remainder(java.math.BigDecimal.ONE).compareTo(new java.math.BigDecimal("0.13")) == 0) {
+            return false;
+        }
+        
+        return true;
     }
 }

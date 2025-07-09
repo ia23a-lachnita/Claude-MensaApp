@@ -78,20 +78,32 @@ const OrderConfirmation = () => {
           p: 4, 
           mb: 4, 
           textAlign: 'center',
-          bgcolor: 'success.light',
-          color: 'success.contrastText' 
+          bgcolor: order.zahlungsStatus === 'BEZAHLT' ? 'success.light' : 'warning.light',
+          color: order.zahlungsStatus === 'BEZAHLT' ? 'success.contrastText' : 'warning.contrastText' 
         }}
       >
         <CheckCircleIcon sx={{ fontSize: 60, mb: 2 }} />
         <Typography variant="h4" component="h1" gutterBottom>
-          Vielen Dank für Ihre Bestellung!
+          {order.zahlungsStatus === 'BEZAHLT' ? 'Vielen Dank für Ihre Bestellung!' : 'Bestellung aufgenommen'}
         </Typography>
         <Typography variant="h6" gutterBottom>
           Ihre Bestellung #{order.id} wurde erfolgreich aufgenommen.
         </Typography>
-        <Typography variant="body1">
-          Ihr Essen wird am {formatDate(order.abholDatum)} um {order.abholZeit} Uhr für Sie bereit sein.
-        </Typography>
+        {order.zahlungsStatus === 'BEZAHLT' && (
+          <>
+            <Typography variant="body1" sx={{ mb: 2 }}>
+              Ihre Zahlung wurde erfolgreich verarbeitet.
+            </Typography>
+            <Typography variant="body1">
+              Ihr Essen wird am {formatDate(order.abholDatum)} um {order.abholZeit} Uhr für Sie bereit sein.
+            </Typography>
+          </>
+        )}
+        {order.zahlungsStatus !== 'BEZAHLT' && (
+          <Typography variant="body1" color="error.main" sx={{ mt: 2 }}>
+            Achtung: Diese Bestellung ist noch nicht bezahlt und kann nicht abgeholt werden.
+          </Typography>
+        )}
       </Paper>
       
       <OrderDetail order={order} />
