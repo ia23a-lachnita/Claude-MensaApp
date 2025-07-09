@@ -57,9 +57,26 @@ const OrderDetail = ({ order, onStartPayment, onCancelOrder }) => {
               <Typography variant="body1" paragraph>
                 Datum: <strong>{formatDate(order.abholDatum)}</strong>
               </Typography>
-              <Typography variant="body1">
+              <Typography variant="body1" paragraph>
                 Uhrzeit: <strong>{order.abholZeit} Uhr</strong>
               </Typography>
+              
+              {/* Abholstatus */}
+              <Box sx={{ 
+                p: 1.5, 
+                borderRadius: 1, 
+                bgcolor: order.zahlungsStatus === 'BEZAHLT' ? 'success.light' : 'error.light',
+                color: order.zahlungsStatus === 'BEZAHLT' ? 'success.contrastText' : 'error.contrastText',
+                mt: 1
+              }}>
+                <Typography variant="body2" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+                  {order.zahlungsStatus === 'BEZAHLT' ? (
+                    <>Abholbar - Zahlung erfolgreich</>
+                  ) : (
+                    <>⚠️ NICHT ABHOLBAR - Zahlung erforderlich</>
+                  )}
+                </Typography>
+              </Box>
             </Paper>
           </Grid>
           
@@ -68,7 +85,7 @@ const OrderDetail = ({ order, onStartPayment, onCancelOrder }) => {
               <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
                 <PaymentIcon sx={{ mr: 1 }} /> Zahlungsinformationen
               </Typography>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="body1">
                   Status: 
                 </Typography>
@@ -77,6 +94,24 @@ const OrderDetail = ({ order, onStartPayment, onCancelOrder }) => {
                   color={order.zahlungsStatus === 'BEZAHLT' ? 'success' : 'warning'} 
                 />
               </Box>
+              
+              {order.zahlungsStatus !== 'BEZAHLT' && (
+                <Box sx={{ 
+                  p: 1.5, 
+                  borderRadius: 1, 
+                  bgcolor: 'warning.light',
+                  color: 'warning.contrastText',
+                  mb: 1
+                }}>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                    ⚠️ Zahlung ausstehend
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                    Diese Bestellung kann erst nach erfolgreicher Zahlung abgeholt werden.
+                  </Typography>
+                </Box>
+              )}
+              
               {order.zahlungsReferenz && (
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                   Referenz: {order.zahlungsReferenz}

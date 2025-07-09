@@ -17,7 +17,7 @@ public class Zahlung {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bestellung_id", nullable = false)
     private Bestellung bestellung;
 

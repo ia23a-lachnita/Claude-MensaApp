@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -39,6 +40,12 @@ public class ZahlungService {
         // Prüfen, ob die Bestellung bereits bezahlt ist
         if (bestellung.getZahlungsStatus() == ZahlungsStatus.BEZAHLT) {
             throw new RuntimeException("Diese Bestellung wurde bereits bezahlt");
+        }
+        
+        // Zusätzliche Prüfung: Gibt es bereits eine erfolgreiche Zahlung?
+        Optional<Zahlung> existingSuccessfulPayment = zahlungRepository.findLatestSuccessfulPaymentByBestellung(bestellung);
+        if (existingSuccessfulPayment.isPresent()) {
+            throw new RuntimeException("Es existiert bereits eine erfolgreiche Zahlung für diese Bestellung");
         }
 
         // Prüfen, ob der Betrag korrekt ist
@@ -96,8 +103,13 @@ public class ZahlungService {
             throw new RuntimeException("Keine Berechtigung für diese Bestellung");
         }
 
-        Zahlung zahlung = zahlungRepository.findByBestellung(bestellung)
-                .orElseThrow(() -> new RuntimeException("Keine Zahlung für diese Bestellung gefunden"));
+        // Versuche zuerst eine erfolgreiche Zahlung zu finden, sonst die neueste
+        Optional<Zahlung> zahlungOpt = zahlungRepository.findLatestSuccessfulPaymentByBestellung(bestellung);
+        if (zahlungOpt.isEmpty()) {
+            zahlungOpt = zahlungRepository.findLatestPaymentByBestellung(bestellung);
+        }
+
+        Zahlung zahlung = zahlungOpt.orElseThrow(() -> new RuntimeException("Keine Zahlung für diese Bestellung gefunden"));
 
         return ZahlungResponse.fromEntity(zahlung);
     }

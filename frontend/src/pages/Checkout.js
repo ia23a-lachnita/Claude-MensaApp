@@ -338,6 +338,24 @@ const Checkout = () => {
             <CartSummary showCheckoutButton={false} />
 
             <Box sx={{ mt: 3 }}>
+              {/* Wichtiger Hinweis zur Bezahlung */}
+              <Paper sx={{ 
+                p: 2, 
+                mb: 2, 
+                bgcolor: 'warning.light', 
+                color: 'warning.contrastText',
+                borderLeft: 4,
+                borderColor: 'warning.main'
+              }}>
+                <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                  ⚠️ Wichtiger Hinweis:
+                </Typography>
+                <Typography variant="body2">
+                  Ihre Bestellung kann nur nach erfolgreicher Bezahlung abgeholt werden. 
+                  Unbezahlte Bestellungen sind nicht abholbar!
+                </Typography>
+              </Paper>
+              
               <Button
                   variant="contained"
                   color="primary"

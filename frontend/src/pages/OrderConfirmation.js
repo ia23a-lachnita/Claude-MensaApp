@@ -100,9 +100,23 @@ const OrderConfirmation = () => {
           </>
         )}
         {order.zahlungsStatus !== 'BEZAHLT' && (
-          <Typography variant="body1" color="error.main" sx={{ mt: 2 }}>
-            Achtung: Diese Bestellung ist noch nicht bezahlt und kann nicht abgeholt werden.
-          </Typography>
+          <Box sx={{ 
+            mt: 2, 
+            p: 2, 
+            bgcolor: 'error.light', 
+            color: 'error.contrastText',
+            borderRadius: 1,
+            border: 2,
+            borderColor: 'error.main'
+          }}>
+            <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 1 }}>
+              ⚠️ WICHTIG: Bestellung nicht abholbar!
+            </Typography>
+            <Typography variant="body1">
+              Diese Bestellung kann erst nach erfolgreicher Bezahlung abgeholt werden.
+              Bitte bezahlen Sie Ihre Bestellung, um sie abholen zu können.
+            </Typography>
+          </Box>
         )}
       </Paper>
       

@@ -88,7 +88,7 @@ const OrderCard = ({ order }) => {
         <Divider sx={{ my: 1.5 }} />
         
         <Box>
-          <Typography variant="body2" component="div">
+          <Typography variant="body2" component="div" sx={{ mb: 1 }}>
             Zahlungsstatus: <Chip 
               label={order.zahlungsStatus === 'BEZAHLT' ? 'Bezahlt' : 'Ausstehend'} 
               color={order.zahlungsStatus === 'BEZAHLT' ? 'success' : 'warning'} 
@@ -96,6 +96,16 @@ const OrderCard = ({ order }) => {
               sx={{ ml: 1 }}
             />
           </Typography>
+          {order.zahlungsStatus !== 'BEZAHLT' && (
+            <Typography variant="body2" color="error.main" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+              ⚠️ Nicht abholbar - Zahlung erforderlich
+            </Typography>
+          )}
+          {order.zahlungsStatus === 'BEZAHLT' && (
+            <Typography variant="body2" color="success.main" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+              Abholbar
+            </Typography>
+          )}
         </Box>
       </CardContent>
       <CardActions>

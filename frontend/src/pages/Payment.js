@@ -103,6 +103,24 @@ const Payment = () => {
         subtitle="Schliessen Sie Ihre Bestellung mit der Bezahlung ab" 
       />
       
+      {/* Wichtiger Hinweis */}
+      <Paper sx={{ 
+        p: 2, 
+        mb: 3, 
+        bgcolor: 'info.light', 
+        color: 'info.contrastText',
+        borderLeft: 4,
+        borderColor: 'info.main'
+      }}>
+        <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 1 }}>
+          ℹ️ Wichtiger Hinweis:
+        </Typography>
+        <Typography variant="body1">
+          Ihre Bestellung kann nur nach erfolgreicher Bezahlung abgeholt werden. 
+          Ohne Bezahlung ist die Bestellung nicht abholbar!
+        </Typography>
+      </Paper>
+      
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <PaymentForm 
