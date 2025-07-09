@@ -27,6 +27,7 @@ const DishSchema = Yup.object().shape({
     .required('Name ist erforderlich')
     .max(100, 'Name darf maximal 100 Zeichen lang sein'),
   beschreibung: Yup.string()
+    .required('Beschreibung ist erforderlich')
     .max(1000, 'Beschreibung darf maximal 1000 Zeichen lang sein'),
   preis: Yup.number()
     .required('Preis ist erforderlich')
@@ -35,7 +36,7 @@ const DishSchema = Yup.object().shape({
   vegetarisch: Yup.boolean(),
   vegan: Yup.boolean(),
   zutaten: Yup.array().of(Yup.string()),
-  allergene: Yup.array().of(Yup.string()),
+  allergene: Yup.array().of(Yup.string()).min(1, 'Mindestens ein Allergen muss angegeben werden'),
   bildUrl: Yup.string().url('Bitte geben Sie eine gültige URL ein').nullable(),
 });
 
@@ -110,6 +111,7 @@ const DishForm = ({ dish, onSave, loading, isEdit }) => {
                   rows={3}
                   error={touched.beschreibung && Boolean(errors.beschreibung)}
                   helperText={touched.beschreibung && errors.beschreibung}
+                  required
                 />
               </Grid>
               
@@ -258,6 +260,8 @@ const DishForm = ({ dish, onSave, loading, isEdit }) => {
                 value={newAllergen}
                 onChange={(e) => setNewAllergen(e.target.value)}
                 size="small"
+                error={touched.allergene && Boolean(errors.allergene)}
+                helperText={touched.allergene && errors.allergene}
               />
               <Button
                 variant="contained"
@@ -292,7 +296,7 @@ const DishForm = ({ dish, onSave, loading, isEdit }) => {
                       ))
                     ) : (
                       <Typography variant="body2" color="text.secondary">
-                        Keine Allergene hinzugefügt
+                        Keine Allergene hinzugefügt (mindestens eines erforderlich)
                       </Typography>
                     )}
                   </>

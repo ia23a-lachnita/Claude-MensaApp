@@ -34,6 +34,9 @@ public class GetraenkService {
         getraenk.setPreis(getraenkRequest.getPreis());
         getraenk.setVorrat(getraenkRequest.getVorrat());
         getraenk.setBeschreibung(getraenkRequest.getBeschreibung());
+        getraenk.setVegetarisch(getraenkRequest.isVegetarisch());
+        getraenk.setVegan(getraenkRequest.isVegan());
+        getraenk.setAllergene(getraenkRequest.getAllergene());
         getraenk.setBildUrl(getraenkRequest.getBildUrl());
         getraenk.setVerfuegbar(getraenkRequest.isVerfuegbar());
 
@@ -48,6 +51,9 @@ public class GetraenkService {
         getraenk.setPreis(getraenkRequest.getPreis());
         getraenk.setVorrat(getraenkRequest.getVorrat());
         getraenk.setBeschreibung(getraenkRequest.getBeschreibung());
+        getraenk.setVegetarisch(getraenkRequest.isVegetarisch());
+        getraenk.setVegan(getraenkRequest.isVegan());
+        getraenk.setAllergene(getraenkRequest.getAllergene());
         getraenk.setBildUrl(getraenkRequest.getBildUrl());
         getraenk.setVerfuegbar(getraenkRequest.isVerfuegbar());
 

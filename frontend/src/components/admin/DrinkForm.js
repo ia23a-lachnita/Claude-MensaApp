@@ -1,5 +1,5 @@
-import React from 'react';
-import { Formik, Form, Field } from 'formik';
+import React, { useState } from 'react';
+import { Formik, Form, Field, FieldArray } from 'formik';
 import * as Yup from 'yup';
 import {
   Paper,
@@ -11,10 +11,12 @@ import {
   FormControlLabel,
   Checkbox,
   CircularProgress,
+  Chip,
 } from '@mui/material';
 import {
   Save as SaveIcon,
   ArrowBack as ArrowBackIcon,
+  Add as AddIcon,
 } from '@mui/icons-material';
 
 const DrinkSchema = Yup.object().shape({
@@ -22,6 +24,7 @@ const DrinkSchema = Yup.object().shape({
     .required('Name ist erforderlich')
     .max(100, 'Name darf maximal 100 Zeichen lang sein'),
   beschreibung: Yup.string()
+    .required('Beschreibung ist erforderlich')
     .max(1000, 'Beschreibung darf maximal 1000 Zeichen lang sein'),
   preis: Yup.number()
     .required('Preis ist erforderlich')
@@ -31,16 +34,24 @@ const DrinkSchema = Yup.object().shape({
     .required('Vorrat ist erforderlich')
     .min(0, 'Vorrat darf nicht negativ sein')
     .integer('Vorrat muss eine ganze Zahl sein'),
+  vegetarisch: Yup.boolean(),
+  vegan: Yup.boolean(),
+  allergene: Yup.array().of(Yup.string()).min(1, 'Mindestens ein Allergen muss angegeben werden'),
   verfuegbar: Yup.boolean(),
   bildUrl: Yup.string().url('Bitte geben Sie eine gültige URL ein').nullable(),
 });
 
 const DrinkForm = ({ drink, onSave, loading, isEdit }) => {
+  const [newAllergen, setNewAllergen] = useState('');
+  
   const initialValues = {
     name: '',
     beschreibung: '',
     preis: '',
     vorrat: 0,
+    vegetarisch: false,
+    vegan: false,
+    allergene: [],
     verfuegbar: true,
     bildUrl: '',
   };
@@ -56,7 +67,7 @@ const DrinkForm = ({ drink, onSave, loading, isEdit }) => {
       onSubmit={handleSubmit}
       enableReinitialize
     >
-      {({ errors, touched }) => (
+      {({ values, errors, touched, setFieldValue }) => (
         <Form>
           <Paper sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" component="h2" gutterBottom>
@@ -90,6 +101,7 @@ const DrinkForm = ({ drink, onSave, loading, isEdit }) => {
                   rows={3}
                   error={touched.beschreibung && Boolean(errors.beschreibung)}
                   helperText={touched.beschreibung && errors.beschreibung}
+                  required
                 />
               </Grid>
               
@@ -139,6 +151,49 @@ const DrinkForm = ({ drink, onSave, loading, isEdit }) => {
                 />
               </Grid>
               
+              <Grid item xs={12} sm={4}>
+                <FormControlLabel
+                  control={
+                    <Field
+                      as={Checkbox}
+                      id="vegetarisch"
+                      name="vegetarisch"
+                      color="success"
+                      checked={values.vegetarisch}
+                      onChange={(e) => {
+                        setFieldValue('vegetarisch', e.target.checked);
+                        if (!e.target.checked) {
+                          setFieldValue('vegan', false);
+                        }
+                      }}
+                    />
+                  }
+                  label="Vegetarisch"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={4}>
+                <FormControlLabel
+                  control={
+                    <Field
+                      as={Checkbox}
+                      id="vegan"
+                      name="vegan"
+                      color="success"
+                      checked={values.vegan}
+                      onChange={(e) => {
+                        setFieldValue('vegan', e.target.checked);
+                        if (e.target.checked) {
+                          setFieldValue('vegetarisch', true);
+                        }
+                      }}
+                      disabled={!values.vegetarisch}
+                    />
+                  }
+                  label="Vegan"
+                />
+              </Grid>
+              
               <Grid item xs={12}>
                 <Field
                   as={TextField}
@@ -152,6 +207,64 @@ const DrinkForm = ({ drink, onSave, loading, isEdit }) => {
                 />
               </Grid>
             </Grid>
+          </Paper>
+          
+          <Paper sx={{ p: 3, mb: 3 }}>
+            <Typography variant="h6" component="h3" gutterBottom>
+              Allergene
+            </Typography>
+            
+            <Box sx={{ display: 'flex', mb: 2 }}>
+              <TextField
+                fullWidth
+                label="Neues Allergen"
+                variant="outlined"
+                value={newAllergen}
+                onChange={(e) => setNewAllergen(e.target.value)}
+                size="small"
+                error={touched.allergene && Boolean(errors.allergene)}
+                helperText={touched.allergene && errors.allergene}
+              />
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={() => {
+                  if (newAllergen.trim()) {
+                    setFieldValue('allergene', [...values.allergene, newAllergen.trim()]);
+                    setNewAllergen('');
+                  }
+                }}
+                disabled={!newAllergen.trim()}
+                sx={{ ml: 1 }}
+              >
+                Hinzufügen
+              </Button>
+            </Box>
+            
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              <FieldArray name="allergene">
+                {({ remove }) => (
+                  <>
+                    {values.allergene.length > 0 ? (
+                      values.allergene.map((allergen, index) => (
+                        <Chip
+                          key={index}
+                          label={allergen}
+                          onDelete={() => remove(index)}
+                          color="error"
+                          variant="outlined"
+                        />
+                      ))
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        Keine Allergene hinzugefügt (mindestens eines erforderlich)
+                      </Typography>
+                    )}
+                  </>
+                )}
+              </FieldArray>
+            </Box>
           </Paper>
           
           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
